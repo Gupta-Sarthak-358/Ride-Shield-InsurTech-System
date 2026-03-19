@@ -5,237 +5,217 @@
 <h1 align="center">🛵 Parametric AI Insurance System</h1>
 
 <p align="center">
-  <strong>AI-powered income protection for gig workers</strong><br/>
+  <strong>Multi-Plan • Multi-Signal • Fraud-Resilient Income Protection</strong><br/>
   Built for <strong>Zomato Delivery Partners</strong>
 </p>
 
 ---
 
-## 🚨 Problem Context
+## 🚨 Problem
 
-Gig delivery workers lose **20–30% of their income** due to external disruptions:
+Gig delivery workers lose **20–30% income** due to:
 
 * 🌧 Weather (rain, heat, AQI)
 * ⚡ Platform outages
-* 🚨 Social restrictions (curfews, strikes)
+* 🚨 Curfews & strikes
 
-### Current Reality
+### Current Gap
 
-* ❌ No income protection system
-* ❌ No real-time compensation
-
----
-
-## 🎯 Objective
-
-Design a **parametric AI insurance system** that:
-
-* Detects real-world disruptions automatically
-* Calculates income loss precisely
-* Triggers payouts without manual claims
-* Prevents fraud using behavioral intelligence
+* ❌ No income protection
+* ❌ No real-time payouts
 
 ---
 
-## ⚠️ Constraints (Strictly Followed)
+## 🎯 Core Idea
 
-* ✔ Only income loss is covered
-* ❌ No health / accident / vehicle claims
-* ✔ Weekly subscription pricing (mandatory)
+A **parametric AI insurance system** that:
+
+> Detects disruptions → validates impact → calculates income → triggers payout
+
+While ensuring:
+
+* No single source is trusted
+* Multi-signal verification
+* Fraud resistance
+* Flexible recharge-style plans
 
 ---
 
-## 👤 Target Persona
+## 👤 Persona
 
 **Rahul — Zomato Delivery Partner (Delhi)**
 
 * ₹25–₹40 per delivery
 * 2–3 deliveries/hour
 * ₹800–₹1000/day
+* 8–10 working hours
 
 ---
 
-## 🌍 Disruption Categories
+## 🌍 Disruption Sources
 
-### 🌧 Environmental
+* 🌧 Rain
+* 🌫 AQI
+* 🚧 Traffic
+* ⚡ Platform outages
+* 🚨 Curfews / strikes
 
-* Heavy rain
-* Extreme heat
-* AQI spikes
-
-### 🚨 Social
-
-* Curfew
-* Local strikes
-* Market closures
-
-### ⚡ Platform
-
-* App outages
-* Low order density
-
-> Impact: **Loss of working hours → Loss of income**
+👉 Result: **Loss of working hours → Loss of income**
 
 ---
 
-## ⚙️ End-to-End System Flow
+## 🧠 System Philosophy
+
+Not:
+
+> Trust one source
+
+But:
+
+> Cross-verify multiple uncertain signals before making financial decisions
+
+---
+
+## 🧩 Multi-Source Data Model
+
+### Inputs from 3 Layers:
+
+1. **User Input** (baseline)
+2. **Platform Simulation** (strong signal)
+3. **System Intelligence** (final authority)
+
+---
+
+### Final Income Calculation
 
 ```
-Onboarding → Risk Profiling → Weekly Policy Creation
-        ↓
-Real-Time Monitoring
-        ↓
-Disruption Detection
-        ↓
-Activity + Fraud Validation
-        ↓
-Auto Claim Generation
-        ↓
-Decision Engine
-        ↓
-Instant / Delayed / Rejected Payout
+final_income = weighted(user_input, platform_data, behavior)
+final_income ≤ city_avg × 1.5
+```
+
+```
+income_confidence ∈ [0,1]
 ```
 
 ---
 
-## 🧾 Onboarding Module
+## 📦 Multi-Plan System
 
-**Inputs:**
+### 🟢 Basic Protect
 
-* Name, City
-* Platform (Zomato)
-* Avg daily income
-* Working hours
+* ₹29–₹39/week
+* Rain + outage coverage
+* ₹300 cap
 
-**Outputs:**
+### 🟡 Smart Protect
 
-* Worker profile
-* Initial risk score
-* Suggested policy
+* ₹49–₹69/week
+* Rain + AQI + traffic
+* ₹600 cap
+
+### 🔴 Assured Plan
+
+```
+guaranteed_payout = min(income × hours × confidence, cap)
+```
+
+* ₹300–₹800
+
+### 🟣 Pro Max
+
+* ₹109–₹129/week
+* Predictive protection
+* ₹400–₹1000
+* Instant payout
 
 ---
 
-## 🧠 AI Risk Assessment
+## 🌍 Context-Aware Risk
 
 ```
-risk_score ∈ [0,1]
+relative_risk = current / baseline(city, time)
 ```
-
-Based on:
-
-* City risk (AQI, traffic)
-* Historical weather
-* Disruption frequency
-* Social instability
 
 ---
 
-## 💰 Weekly Pricing Model
-
-```
-weekly_premium = base_price + (risk_score × multiplier)
-```
-
-**Example:**
-
-* Base = ₹30
-* Risk = 0.7
-  👉 Premium = ₹44/week
-
----
-
-## 🌩️ Parametric Trigger Engine
-
-| Trigger  | Condition            |
-| -------- | -------------------- |
-| Rain     | rainfall > threshold |
-| AQI      | AQI > 300            |
-| Traffic  | congestion > 0.75    |
-| Platform | outage detected      |
-| Social   | curfew active        |
-
-### Multi-Trigger Intelligence
+## 🌩 Multi-Trigger Engine
 
 ```
 disruption_score =
-  0.25 weather +
-  0.2 AQI +
-  0.15 traffic +
-  0.2 platform +
-  0.2 social
+0.25 weather +
+0.2 AQI +
+0.15 traffic +
+0.2 platform +
+0.2 social
 ```
 
 ---
 
-## 📡 Event Confidence Layer
+## 🚨 Social Detection
 
 ```
-event_confidence ∈ [0,1]
+social_event = admin_flag OR news OR inactivity_pattern
 ```
-
-Ensures reliability using:
-
-* Multi-source validation
-* Behavioral consistency
-* API trust
 
 ---
 
-## 👨‍🔧 Activity Validation
+## 📡 Event Confidence
 
-Verifies if the worker was actually active:
+```
+event_confidence =
+0.5 API +
+0.3 behavior +
+0.2 history
+```
 
-* Movement (bike speed)
-* Delivery stop patterns
-* Active duration
+### Severity Layer
+
+```
+event_severity ∈ {low, medium, high}
+```
 
 ---
 
-## 🔍 Fraud Detection Engine
+## 🔍 Fraud Detection
+
+### Critical
+
+* Impossible movement
+* Cluster fraud
+
+### Moderate
+
+* No activity
+* IP mismatch
+
+### Low
+
+* Minor mismatch
 
 ```
-fraud_score =
-  distance_anomaly +
-  movement_pattern +
-  inactivity +
-  ip_mismatch +
-  cluster_score +
-  social_mismatch
+fraud_score ∈ [0,1]
 ```
-
-### 🚨 Social Fraud Case
-
-Curfew active + no user activity → flagged as fraud
-
-### Decision Logic
-
-| Score   | Action    |
-| ------- | --------- |
-| < 0.4   | ✅ Approve |
-| 0.4–0.7 | ⚠ Delay   |
-| > 0.7   | ❌ Reject  |
 
 ---
 
-## 🧩 Cluster Fraud Detection
+## 🧩 Cluster Detection
 
 ```
-group by (location + time)
-
-if count > threshold:
-  cluster_flag = TRUE
+if users in same location + time > threshold → cluster_flag
 ```
 
-Detects coordinated fraud attempts
+✔ Smart filtering (not all rejected)
 
 ---
 
-## 💰 Income Loss Engine
+## 🧠 Trust System
 
 ```
-income_per_hour = daily_income / working_hours
+trust_score ∈ [0,1]
+```
 
-payout = income_per_hour × disruption_duration
+```
+adjusted_fraud = fraud - (0.2 × trust)
 ```
 
 ---
@@ -244,77 +224,123 @@ payout = income_per_hour × disruption_duration
 
 ```
 final_score =
-  0.35 disruption +
-  0.25 confidence +
-  0.25 (1 - fraud) +
-  0.15 trust
+0.35 disruption +
+0.25 confidence +
+0.25 (1 - fraud) +
+0.15 trust
 ```
 
-| Score   | Outcome    |
-| ------- | ---------- |
-| > 0.7   | 💸 Instant |
-| 0.5–0.7 | ⏳ Delayed  |
-| < 0.5   | ❌ Rejected |
+### Output
+
+| Score | Result     |
+| ----- | ---------- |
+| High  | 💸 Instant |
+| Mid   | ⏳ Delayed  |
+| Low   | ❌ Rejected |
 
 ---
 
-## 💳 Instant Payout System
+## 💰 Income Loss Engine
 
-* Razorpay (test/mock integration)
-* Instant wallet credit
-* Transaction logs
-* Retry handling
+```
+income_per_hour = final_income / working_hours
+payout = income_per_hour × disruption_duration
+```
+
+### Constraints
+
+```
+payout ≤ plan_limit
+payout ≤ max_daily_income
+```
+
+---
+
+## 🔮 Predictive Pricing
+
+* Forecast weather & AQI
+* Notify users
+* Limit price change ≤ 20%
+
+---
+
+## ⚙️ System Flow
+
+```
+Trigger → Confidence → Validation → Fraud → Decision → Payout
+```
+
+---
+
+## 💳 Payout System
+
+* Wallet simulation
+* Instant / delayed payouts
+
+### Controls
+
+* Logs
+* Retry system
+* Duplicate prevention
 
 ---
 
 ## 📊 Dashboard
 
-### 👤 Worker
+### Worker
 
-* Weekly premium
+* Plan
+* Premium
 * Coverage
-* Claim status
 
-### 🛠 Admin
+### Admin
 
-* Fraud rate
+* Fraud stats
 * Alerts
-* Disruption analytics
-
----
-
-## 🔮 Predictive Intelligence
-
-Example:
-
-⚠ Rain expected → coverage adjusted proactively
+* Analytics
 
 ---
 
 ## 🧪 Demo Scenarios
 
-### ✅ Legit Case
-
-Rain + valid activity → Instant payout
-
-### ❌ Fraud Case
-
-Fake GPS + inactivity → Rejected
-
-### ⚠ Curfew Case
-
-No activity → Delayed / Rejected
+* ✅ Legit → Instant
+* ❌ Fraud → Reject
+* ⚠ Edge → Delay
+* 💥 Cluster → Selective approval
 
 ---
 
-## 🧠 System Positioning
+## 🧯 Failure Handling
 
-This is not a simple rule engine.
+* API failure → fallback
+* Missing data → delay
+* Inconsistency → partial payout
 
-> It is a **persona-specific AI system** that evaluates environmental, social, platform, and behavioral signals to make real-time financial decisions.
+---
+
+## 🚀 Scalability
+
+* Multi-platform ready
+* Extensible triggers
+* Adaptive pricing
+
+---
+
+## 🧠 Positioning
+
+> A multi-signal AI system that makes real-time, fraud-resistant financial decisions without relying on a single source of truth.
 
 ---
 
 ## 🏁 Final Pitch
 
-> A parametric insurance system for Zomato delivery partners that automatically protects income during disruptions using AI-driven risk scoring, fraud detection, and zero-touch payouts aligned with a weekly earning cycle.
+> A recharge-style, AI-powered insurance system that protects gig workers’ income using predictive risk modeling, multi-source validation, and real-time payouts.
+
+---
+
+## 🧨 Reality
+
+* Adaptive
+* Explainable
+* Fraud-resilient
+* Demo-ready
