@@ -413,5 +413,3 @@ It is a **multi-signal AI pipeline** that:
 - Issues zero-touch payouts in under 2 minutes
 
 All wrapped in an affordable, weekly recharge model that fits how delivery partners actually earn.
-
-> *Built for Rahul. Designed for every gig worker who loses income because the world didn't cooperate.*
