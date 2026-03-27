@@ -31,6 +31,8 @@
 
 ---
 
+![RideShield Architecture Diagram](publicIMG/Gemini_Generated_Image_romo4promo4promo.png)
+
 ## 🔷 Architecture Overview
 
 RideShield is a **3-tier monorepo application** with clear separation between data ingestion, business logic, and presentation.
