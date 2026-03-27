@@ -1,6 +1,9 @@
-
-
 # 🏗️ RideShield — Architecture Plan & Implementation Roadmap
+
+> [!TIP]
+> **View Repo Content:** &nbsp; 📜 **[Project Overview](README.md)** &nbsp; | &nbsp; 🏗️ **[Architecture & Roadmap](README2.md)**
+
+---
 
 > **Where we are:** Phase 1 complete (design + documentation). **Where we're going:** Working product by April 17.
 
