@@ -114,3 +114,28 @@ async def test_premium_formula_correctness():
 
         # Premium should be at least base price and close to formula
         assert calc["final_premium"] >= calc["base_price"]
+
+
+@pytest.mark.asyncio
+async def test_force_activate_pending_policy_in_simulation_mode():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        worker_id = await create_test_worker(client, "+919988776605")
+
+        create_response = await client.post("/api/policies/create", json={
+            "worker_id": worker_id,
+            "plan_name": "smart_protect"
+        })
+        assert create_response.status_code == 201
+
+        force_response = await client.post(f"/api/policies/admin/force-activate?worker_id={worker_id}")
+        assert force_response.status_code == 200
+        force_data = force_response.json()
+        assert force_data["activated_count"] == 1
+        assert force_data["simulation_mode"] is True
+
+        active_response = await client.get(f"/api/policies/active/{worker_id}")
+        assert active_response.status_code == 200
+        active_data = active_response.json()
+        assert active_data["has_active_policy"] is True
+        assert active_data["active_policy"]["status"] == "active"

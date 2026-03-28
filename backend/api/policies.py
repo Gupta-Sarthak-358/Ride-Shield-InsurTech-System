@@ -425,26 +425,84 @@ async def activate_pending_policies(
     """
     now = utc_now_naive()
 
-    result = await db.execute(
-        select(Policy).where(
-            and_(
-                Policy.status == "pending",
-                Policy.activates_at <= now,
-                Policy.expires_at > now,
-            )
-        )
+    activation_filter = and_(
+        Policy.status == "pending",
+        Policy.expires_at > now,
     )
+    if not settings.SIMULATION_MODE:
+        activation_filter = and_(
+            activation_filter,
+            Policy.activates_at <= now,
+        )
+
+    result = await db.execute(select(Policy).where(activation_filter))
     to_activate = result.scalars().all()
 
     count = 0
     for policy in to_activate:
         policy.status = "active"
+        if settings.SIMULATION_MODE and policy.activates_at > now:
+            policy.activates_at = now
         count += 1
 
     await db.flush()
     await db.commit()
 
     return {
-        "message": f"Activated {count} policies.",
+        "message": (
+            f"Activated {count} policies."
+            if not settings.SIMULATION_MODE
+            else f"Activated {count} policies in simulation mode."
+        ),
         "activated_count": count,
+        "simulation_mode": settings.SIMULATION_MODE,
+    }
+
+
+@router.post("/admin/force-activate")
+async def force_activate_policies(
+    worker_id: UUID | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Simulation-only admin helper.
+    Force-activates pending policies immediately for demos and manual checks.
+    Not intended for production behavior.
+    """
+    if not settings.SIMULATION_MODE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Force activation is only available in simulation mode.",
+        )
+
+    now = utc_now_naive()
+    query = select(Policy).where(
+        and_(
+            Policy.status == "pending",
+            Policy.expires_at > now,
+        )
+    )
+    if worker_id:
+        query = query.where(Policy.worker_id == worker_id)
+
+    to_activate = (await db.execute(query)).scalars().all()
+
+    count = 0
+    activated_policy_ids = []
+    for policy in to_activate:
+        policy.status = "active"
+        policy.activates_at = now
+        activated_policy_ids.append(str(policy.id))
+        count += 1
+
+    await db.flush()
+    await db.commit()
+
+    return {
+        "message": f"Force-activated {count} pending policies for demo use.",
+        "activated_count": count,
+        "worker_id": str(worker_id) if worker_id else None,
+        "policy_ids": activated_policy_ids,
+        "simulation_mode": True,
+        "note": "This endpoint exists only for demo/testing flows.",
     }

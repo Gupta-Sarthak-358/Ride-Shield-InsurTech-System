@@ -99,7 +99,7 @@ async def seed():
         )
 
         # ============================================
-        # WORKER 2: Vikram (Fraud persona)
+        # WORKER 2: Vikram (Fraud persona - pending policy for demo activation)
         # ============================================
         vikram_risk = risk_scorer.calculate_risk_score("delhi", "south_delhi")
 
@@ -144,17 +144,17 @@ async def seed():
             weekly_premium=Decimal(str(vikram_premium["final_premium"])),
             coverage_cap=Decimal("600"),
             triggers_covered=["rain", "heat", "aqi", "traffic", "platform_outage"],
-            status="active",
-            purchased_at=now - timedelta(hours=26),
-            activates_at=now - timedelta(hours=2),
-            expires_at=now + timedelta(days=6, hours=22),
+            status="pending",
+            purchased_at=now - timedelta(hours=1),
+            activates_at=now + timedelta(hours=23),
+            expires_at=now + timedelta(days=7, hours=23),
         )
         db.add(vikram_policy)
 
-        print(f"  [ok] Vikram Singh created (ID: {vikram.id}) [fraud persona]")
+        print(f"  [ok] Vikram Singh created (ID: {vikram.id}) [fraud persona, pending policy]")
 
         # ============================================
-        # WORKER 3: Arun (Edge case - new user)
+        # WORKER 3: Arun (Edge case - pending policy for manual activation)
         # ============================================
         arun_risk = risk_scorer.calculate_risk_score("delhi", "east_delhi")
 
@@ -206,10 +206,10 @@ async def seed():
                 "platform_outage",
                 "social",
             ],
-            status="active",
-            purchased_at=now - timedelta(hours=30),
-            activates_at=now - timedelta(hours=6),
-            expires_at=now + timedelta(days=6, hours=18),
+            status="pending",
+            purchased_at=now - timedelta(hours=2),
+            activates_at=now + timedelta(hours=22),
+            expires_at=now + timedelta(days=7, hours=22),
         )
         db.add(arun_policy)
 
@@ -224,7 +224,7 @@ async def seed():
         )
         db.add(minimal_activity)
 
-        print(f"  [ok] Arun Patel created (ID: {arun.id}) [edge case persona]")
+        print(f"  [ok] Arun Patel created (ID: {arun.id}) [edge case persona, pending policy]")
 
         # ============================================
         # WORKER 4: Priya (Multi-city demo - Bengaluru)
@@ -292,6 +292,8 @@ async def seed():
             details={
                 "workers_created": 4,
                 "policies_created": 4,
+                "active_policies": 2,
+                "pending_policies": 2,
                 "personas": [
                     "rahul_legitimate",
                     "vikram_fraud",
@@ -306,12 +308,14 @@ async def seed():
         print("\nDatabase seeded successfully!")
         print("   Workers: 4")
         print("   Policies: 4")
+        print("   Active policies: 2")
+        print("   Pending policies: 2")
         print("   Activity logs: 9")
         print("\nWorker IDs for testing:")
-        print(f"   Rahul (legit):  {rahul.id}")
-        print(f"   Vikram (fraud): {vikram.id}")
-        print(f"   Arun (edge):    {arun.id}")
-        print(f"   Priya (multi):  {priya.id}")
+        print(f"   Rahul (active legit):   {rahul.id}")
+        print(f"   Vikram (pending fraud): {vikram.id}")
+        print(f"   Arun (pending edge):    {arun.id}")
+        print(f"   Priya (active multi):   {priya.id}")
 
 
 if __name__ == "__main__":
