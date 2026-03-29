@@ -35,6 +35,7 @@ jobs:
         env:
           ENV: test
           ENABLE_TRIGGER_SCHEDULER: "false"
+          PYTHONPATH: .
         run: pytest backend/tests -q
 
   frontend:
