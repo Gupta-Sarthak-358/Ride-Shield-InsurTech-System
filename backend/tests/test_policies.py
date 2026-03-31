@@ -12,6 +12,7 @@ async def create_test_worker(client, phone="+919988776655"):
     response = await client.post("/api/workers/register", json={
         "name": "Policy Test Worker",
         "phone": phone,
+        "password": "policytest123",
         "city": "delhi",
         "zone": "south_delhi",
         "platform": "zomato",
@@ -19,6 +20,7 @@ async def create_test_worker(client, phone="+919988776655"):
         "working_hours": 9,
         "consent_given": True
     })
+    assert response.status_code == 201, response.text
     return response.json()["worker_id"]
 
 

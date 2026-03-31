@@ -5,9 +5,11 @@ Test configuration and fixtures.
 import os
 
 os.environ["ENV"] = "test"
-os.environ.setdefault("SESSION_SECRET", "rideshield-test-secret")
-os.environ.setdefault("ADMIN_PASSWORD", "rideshield-test-admin-password")
-os.environ.setdefault("ADMIN_USERNAME", "admin")
+os.environ["DATABASE_URL"] = "postgresql+asyncpg://rideshield:rideshield123@localhost:5433/rideshield_test_db"
+os.environ["DATABASE_URL_SYNC"] = "postgresql://rideshield:rideshield123@localhost:5433/rideshield_test_db"
+os.environ["SESSION_SECRET"] = "rideshield-test-secret"
+os.environ["ADMIN_PASSWORD"] = "rideshield-test-admin-password"
+os.environ["ADMIN_USERNAME"] = "admin"
 
 import pytest
 import pytest_asyncio
@@ -15,6 +17,7 @@ from httpx import ASGITransport, AsyncClient
 
 from backend.config import settings
 from backend.core.location_service import location_service
+from backend.core.rate_limit import auth_rate_limiter
 from backend.database import Base, close_db, engine
 from backend.main import app
 
@@ -32,6 +35,7 @@ async def ensure_db():
     async with async_session_factory() as session:
         await location_service.ensure_bootstrap(session, strict_backfill=True)
         await session.commit()
+    await auth_rate_limiter.reset()
     yield
     await close_db()
 

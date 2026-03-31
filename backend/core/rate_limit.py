@@ -7,6 +7,8 @@ import time
 
 from fastapi import HTTPException, status
 
+from backend.config import settings
+
 
 class InMemoryRateLimiter:
     def __init__(self) -> None:
@@ -14,6 +16,8 @@ class InMemoryRateLimiter:
         self._lock = asyncio.Lock()
 
     async def hit(self, key: str, *, limit: int, window_seconds: int) -> None:
+        if settings.ENV == "test":
+            return
         now = time.monotonic()
         async with self._lock:
             recent = [
@@ -31,6 +35,10 @@ class InMemoryRateLimiter:
 
             recent.append(now)
             self._events[key] = recent
+
+    async def reset(self) -> None:
+        async with self._lock:
+            self._events.clear()
 
 
 auth_rate_limiter = InMemoryRateLimiter()

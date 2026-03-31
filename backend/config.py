@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "RideShield"
     APP_VERSION: str = "0.1.0"
+    ENV: str = ENV
     DEBUG: bool = ENV != "prod"
     SQL_ECHO: bool = False
     HOST: str = "0.0.0.0"
