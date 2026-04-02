@@ -166,6 +166,29 @@ describe("Onboarding", () => {
     expect(await screen.findByText(/Purchase selected plan/i)).toBeInTheDocument();
     expect(workersApi.register).toHaveBeenCalledTimes(1);
     expect(mockLoginWorker).not.toHaveBeenCalled();
-    expect(localStorage.getItem(STORAGE_KEYS.workerId)).toBe("42");
+    expect(localStorage.getItem("rideshield.workerId")).toBeNull();
+  });
+
+  it("does not refetch cities when the selected city changes", async () => {
+    locationsApi.cities.mockResolvedValue({
+      data: [
+        { id: 1, slug: "delhi", display_name: "Delhi" },
+        { id: 2, slug: "mumbai", display_name: "Mumbai" },
+      ],
+    });
+    locationsApi.zones.mockImplementation(async (citySlug) => ({
+      data: citySlug === "mumbai"
+        ? [{ id: 3, slug: "western_suburbs", display_name: "Western Suburbs" }]
+        : [{ id: 2, slug: "south_delhi", display_name: "South Delhi" }],
+    }));
+
+    renderOnboarding();
+
+    await waitFor(() => expect(locationsApi.cities).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(screen.getByLabelText(/City/i), { target: { value: "mumbai" } });
+
+    await waitFor(() => expect(locationsApi.zones).toHaveBeenLastCalledWith("mumbai"));
+    expect(locationsApi.cities).toHaveBeenCalledTimes(1);
   });
 });

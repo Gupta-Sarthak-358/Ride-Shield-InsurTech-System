@@ -202,7 +202,16 @@ async def resolve_delayed_claim(
 
     if request.decision == "approve":
         claim.status = "approved"
-        payout_result = await payout_executor.execute(db, claim, claim.worker, claim.policy.plan_name if claim.policy else "smart_protect", float(claim.calculated_payout or 0))
+        payout_amount = claim.final_payout
+        if payout_amount is None:
+            payout_amount = claim.calculated_payout or 0
+        payout_result = await payout_executor.execute(
+            db,
+            claim,
+            claim.worker,
+            claim.policy.plan_name if claim.policy else "smart_protect",
+            float(payout_amount),
+        )
         trust = (await db.execute(select(TrustScore).where(TrustScore.worker_id == claim.worker_id))).scalar_one_or_none()
         if trust:
             trust.approved_claims = (trust.approved_claims or 0) + 1

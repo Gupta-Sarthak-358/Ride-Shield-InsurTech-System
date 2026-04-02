@@ -114,12 +114,8 @@ async def get_current_session(
     return verify_session_token(token)
 
 
-async def require_authenticated_session(
-    rideshield_session: str | None = Cookie(default=None),
-    authorization: str | None = Header(default=None),
-) -> Dict[str, Any]:
-    token = parse_cookie_or_bearer(cookie_token=rideshield_session, authorization=authorization)
-    return verify_session_token(token)
+# Auth validation already happens inside verify_session_token, so keep a single implementation.
+require_authenticated_session = get_current_session
 
 
 async def get_admin_session(session: Dict[str, Any] = Header(default=None)):  # type: ignore[assignment]

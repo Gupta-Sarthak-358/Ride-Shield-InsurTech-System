@@ -1,5 +1,6 @@
 """Analytics API for admin dashboard metrics and operational summaries."""
 
+import asyncio
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends
@@ -12,11 +13,16 @@ from backend.core.fraud_model_service import fraud_model_service
 from backend.core.risk_model_service import risk_model_service
 from backend.core.session_auth import require_admin_session
 from backend.core.trigger_scheduler import trigger_scheduler
-from backend.database import get_db
+from backend.database import async_session_factory, get_db
 from backend.db.models import AuditLog, Event, Payout, Policy, Worker, WorkerActivity
 from backend.utils.time import utc_now_naive
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
+
+
+async def _forecast_city_snapshot(city: str, horizon_hours: int) -> dict:
+    async with async_session_factory() as forecast_db:
+        return await forecast_engine.forecast_city(forecast_db, city, horizon_hours=horizon_hours)
 
 
 def forecast_band(score: float) -> str:
@@ -110,9 +116,11 @@ async def get_admin_overview(
     ).all()
     active_city_counts = {city: count for city, count in active_events_by_city}
 
+    cities = list(settings.CITY_RISK_PROFILES.keys())
+    city_forecasts = await asyncio.gather(*[_forecast_city_snapshot(city, 168) for city in cities])
+
     forecast = []
-    for city in settings.CITY_RISK_PROFILES.keys():
-        city_forecast = await forecast_engine.forecast_city(db, city, horizon_hours=168)
+    for city, city_forecast in zip(cities, city_forecasts):
         base = float(settings.CITY_RISK_PROFILES[city]["base_risk"])
         city_score = round(
             sum(zone["projected_risk"] for zone in city_forecast["zones"]) / max(1, len(city_forecast["zones"])),

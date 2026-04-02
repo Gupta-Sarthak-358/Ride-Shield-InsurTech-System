@@ -1,13 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
+import toast from "react-hot-toast";
 
 import { authApi } from "../api/auth";
 
 const SESSION_KEY = "rideshield.session_meta";
+const LEGACY_WORKER_ID_KEY = "rideshield.workerId";
+
+export function sanitizeSessionMeta(meta) {
+  const role = meta?.session?.role;
+  return role ? { session: { role } } : null;
+}
 
 export function readStoredSessionMeta() {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return raw ? sanitizeSessionMeta(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
@@ -15,7 +23,13 @@ export function readStoredSessionMeta() {
 
 export function writeStoredSessionMeta(meta) {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(meta));
+    const sanitized = sanitizeSessionMeta(meta);
+    if (!sanitized) {
+      clearStoredSessionMeta();
+      return;
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sanitized));
+    localStorage.removeItem(LEGACY_WORKER_ID_KEY);
   } catch {
     // Storage unavailable
   }
@@ -24,6 +38,7 @@ export function writeStoredSessionMeta(meta) {
 export function clearStoredSessionMeta() {
   try {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(LEGACY_WORKER_ID_KEY);
   } catch {
     // Storage unavailable
   }
@@ -37,6 +52,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let active = true;
+    const stored = readStoredSessionMeta();
+    if (stored) {
+      writeStoredSessionMeta(stored);
+    } else {
+      clearStoredSessionMeta();
+    }
 
     async function restore() {
       try {
@@ -47,10 +68,13 @@ export function AuthProvider({ children }) {
         const next = { session: response.data.session };
         setSession(next);
         writeStoredSessionMeta(next);
-      } catch {
+      } catch (error) {
         if (active) {
           setSession(null);
           clearStoredSessionMeta();
+          if (error?.response?.status !== 401) {
+            toast.error("Session could not be restored. Please sign in again.");
+          }
         }
       } finally {
         if (active) {
@@ -74,14 +98,18 @@ export function AuthProvider({ children }) {
       async loginWorker(phone, password) {
         const response = await authApi.workerLogin({ phone, password });
         const next = { session: response.data.session };
-        setSession(next);
+        flushSync(() => {
+          setSession(next);
+        });
         writeStoredSessionMeta(next);
         return next;
       },
       async loginAdmin(username, password) {
         const response = await authApi.adminLogin({ username, password });
         const next = { session: response.data.session };
-        setSession(next);
+        flushSync(() => {
+          setSession(next);
+        });
         writeStoredSessionMeta(next);
         return next;
       },
@@ -92,7 +120,9 @@ export function AuthProvider({ children }) {
           // cookie cleared by server
         }
         clearStoredSessionMeta();
-        setSession(null);
+        flushSync(() => {
+          setSession(null);
+        });
       },
     }),
     [booting, session],

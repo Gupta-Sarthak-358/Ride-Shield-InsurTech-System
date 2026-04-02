@@ -34,7 +34,6 @@ class PayoutExecutor:
         )
         db.add(payout)
         await db.flush()
-        claim.final_payout = Decimal(str(amount))
         db.add(
             AuditLog(
                 entity_type="payout",

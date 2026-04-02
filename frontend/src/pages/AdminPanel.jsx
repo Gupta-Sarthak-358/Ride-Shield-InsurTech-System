@@ -110,6 +110,17 @@ export default function AdminPanel() {
   const forecastEntries = (analytics?.next_week_forecast || []).filter(
     (entry) => selectedCity === "all" || entry.city === selectedCity,
   );
+  const scheduler = analytics?.scheduler;
+  const healthValue = scheduler?.enabled
+    ? scheduler?.last_error
+      ? "Degraded"
+      : "Operational"
+    : "Disabled";
+  const healthHint = scheduler?.last_error
+    ? "Scheduler error detected"
+    : scheduler?.enabled
+      ? "Scheduler heartbeat healthy"
+      : "Scheduler paused";
 
   if (loading) {
     return <div className="panel p-8 text-center text-ink/60">Loading admin panel...</div>;
@@ -178,7 +189,7 @@ export default function AdminPanel() {
           <KpiTile label="Payout vol." value={formatCurrency(payoutStats?.total_amount)} hint={`${payoutStats?.total_payouts ?? 0} transfers`} />
         </div>
         <div className="bento-1-4">
-          <KpiTile label="Health" value="99.98%" hint="Pipeline stable" accent="dark" />
+          <KpiTile label="Health" value={healthValue} hint={healthHint} accent="dark" />
         </div>
       </div>
 

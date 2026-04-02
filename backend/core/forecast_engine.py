@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,9 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import settings
 from backend.core.location_service import location_service
 from backend.core.risk_model_service import risk_model_service
+from backend.db.models import Event, Payout
 from backend.ml.explainability import summarize_forecast
 from backend.ml.features.risk_features import risk_feature_builder
-from backend.db.models import Event, Payout
+from backend.utils.time import utc_now_naive
 from simulations.aqi_mock import aqi_simulator
 from simulations.platform_mock import platform_simulator
 from simulations.traffic_mock import traffic_simulator
@@ -152,14 +154,22 @@ class ForecastEngine:
         return [trigger for feature, trigger in mapping.items() if features.get(feature, 0.0) >= 0.5]
 
     async def _incident_pressure(self, db: AsyncSession, zone: str) -> tuple[int, int]:
+        now = utc_now_naive()
         incidents_7d = (
             await db.execute(
-                select(func.count(Event.id)).where(Event.zone == zone, Event.status == "active")
+                select(func.count(Event.id)).where(
+                    Event.zone == zone,
+                    Event.status == "active",
+                    Event.started_at >= now - timedelta(days=7),
+                )
             )
         ).scalar_one()
         incidents_30d = (
             await db.execute(
-                select(func.count(Event.id)).where(Event.zone == zone)
+                select(func.count(Event.id)).where(
+                    Event.zone == zone,
+                    Event.started_at >= now - timedelta(days=30),
+                )
             )
         ).scalar_one()
         return int(incidents_7d or 0), int(incidents_30d or 0)

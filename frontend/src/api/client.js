@@ -19,7 +19,10 @@ client.interceptors.response.use(
     const status = error.response?.status;
     const detail = error.response?.data?.detail;
     if (status === 401) {
-      window.location.href = "/auth?reason=session_expired";
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/auth") {
+        window.location.href = "/auth?reason=session_expired";
+      }
     } else if (status === 403) {
       toast.error(detail || "You do not have permission for this action.");
     } else if (status === 429) {

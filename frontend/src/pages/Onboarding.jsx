@@ -101,12 +101,18 @@ export default function Onboarding() {
   const [zoneOptions, setZoneOptions] = useState([]);
   const [registration, setRegistration] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState("");
+  const [planCatalog, setPlanCatalog] = useState([]);
+  const [planCatalogLoading, setPlanCatalogLoading] = useState(false);
+  const [planCatalogError, setPlanCatalogError] = useState("");
+  const [planCatalogReloadKey, setPlanCatalogReloadKey] = useState(0);
   const [policyPurchase, setPolicyPurchase] = useState(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [locationsError, setLocationsError] = useState("");
   const [touched, setTouched] = useState({});
 
-  const selectedPlanData = registration?.available_plans?.find((plan) => plan.plan_name === selectedPlan);
+  const selectedPlanData =
+    planCatalog.find((plan) => plan.plan_name === selectedPlan) ||
+    registration?.available_plans?.find((plan) => plan.plan_name === selectedPlan);
   const stepIndex = steps.findIndex((item) => item.id === step);
   const progressWidth = `${((stepIndex + 1) / steps.length) * 100}%`;
   const validationErrors = useMemo(() => validateRegistration(form), [form]);
@@ -130,6 +136,9 @@ export default function Onboarding() {
         if (draft.selectedPlan) {
           setSelectedPlan(draft.selectedPlan);
         }
+        if (Array.isArray(draft.planCatalog)) {
+          setPlanCatalog(draft.planCatalog);
+        }
         if (draft.step && draft.step !== "complete") {
           setStep(draft.step);
         }
@@ -148,15 +157,19 @@ export default function Onboarding() {
       const response = await locationsApi.cities();
       const cities = response.data || [];
       setCityOptions(cities);
-      if (cities.length && !cities.some((city) => city.slug === form.city)) {
-        setForm((current) => ({ ...current, city: cities[0].slug }));
+      if (cities.length) {
+        setForm((current) => (
+          cities.some((city) => city.slug === current.city)
+            ? current
+            : { ...current, city: cities[0].slug }
+        ));
       }
     } catch {
       setLocationsError("Worker geography could not be loaded. Retry to continue onboarding.");
     } finally {
       setLocationsLoading(false);
     }
-  }, [form.city]);
+  }, []);
 
   const loadZones = useCallback(async (citySlug) => {
     try {
@@ -164,13 +177,17 @@ export default function Onboarding() {
       const response = await locationsApi.zones(citySlug);
       const zones = response.data || [];
       setZoneOptions(zones);
-      if (zones.length && !zones.some((zone) => zone.slug === form.zone)) {
-        setForm((current) => ({ ...current, zone: zones[0].slug }));
+      if (zones.length) {
+        setForm((current) => (
+          zones.some((zone) => zone.slug === current.zone)
+            ? current
+            : { ...current, zone: zones[0].slug }
+        ));
       }
     } catch {
       setLocationsError("Zones could not be loaded for the selected city.");
     }
-  }, [form.zone]);
+  }, []);
 
   useEffect(() => {
     if (!draftLoaded) {
@@ -200,9 +217,56 @@ export default function Onboarding() {
         form,
         registration,
         selectedPlan,
+        planCatalog,
       }),
     );
-  }, [draftLoaded, form, registration, selectedPlan, step]);
+  }, [draftLoaded, form, planCatalog, registration, selectedPlan, step]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadPlanCatalog() {
+      if (step !== "plan" || !registration?.worker_id) {
+        return;
+      }
+
+      setPlanCatalogLoading(true);
+      setPlanCatalogError("");
+      try {
+        const response = await policiesApi.plans(registration.worker_id);
+        if (!active) {
+          return;
+        }
+        const plans = response.data?.plans || [];
+        setPlanCatalog(plans);
+
+        const recommended = response.data?.recommended;
+        if (recommended) {
+          setSelectedPlan((current) => {
+            if (!current) {
+              return recommended;
+            }
+            return plans.some((plan) => plan.plan_name === current) ? current : recommended;
+          });
+        }
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+        setPlanCatalogError(error.response?.data?.detail || "Detailed premium pricing could not be loaded.");
+      } finally {
+        if (active) {
+          setPlanCatalogLoading(false);
+        }
+      }
+    }
+
+    loadPlanCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, [planCatalogReloadKey, registration?.worker_id, step]);
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -217,6 +281,8 @@ export default function Onboarding() {
     try {
       const result = await loginWorker(form.phone, form.password);
       navigate(`/dashboard/${result.session.worker_id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Worker sign-in failed. Use the sign-in page to continue.");
     } finally {
       setLoading(false);
     }
@@ -251,8 +317,9 @@ export default function Onboarding() {
         consent_given: form.consent_given,
       });
       setRegistration(response.data);
+      setPlanCatalog([]);
+      setPlanCatalogError("");
       setSelectedPlan(response.data.recommended_plan);
-      localStorage.setItem(STORAGE_KEYS.workerId, response.data.worker_id);
       setStep("plan");
       toast.success("Worker registered. Choose a policy next.");
     } catch (error) {
@@ -509,11 +576,22 @@ export default function Onboarding() {
           <RiskGauge score={registration.risk_score} breakdown={registration.risk_breakdown} />
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="grid gap-4">
-              {registration.available_plans.map((plan) => (
+              {(planCatalog.length ? planCatalog : registration.available_plans).map((plan) => (
                 <PlanCard key={plan.plan_name} plan={plan} selected={selectedPlan === plan.plan_name} onSelect={setSelectedPlan} />
               ))}
             </div>
-            <PremiumCalculator selectedPlan={selectedPlanData} />
+            <div className="space-y-4">
+              {planCatalogError ? (
+                <ErrorState
+                  message={planCatalogError}
+                  onRetry={() => setPlanCatalogReloadKey((current) => current + 1)}
+                />
+              ) : null}
+              {planCatalogLoading ? (
+                <div className="panel p-6 text-sm text-ink/60">Loading detailed premium pricing...</div>
+              ) : null}
+              <PremiumCalculator selectedPlan={selectedPlanData} />
+            </div>
           </div>
           <div className="context-panel flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-ink/65">

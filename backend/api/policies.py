@@ -283,7 +283,7 @@ async def get_active_policy(
                 Policy.activates_at <= now,
                 Policy.expires_at >= now,
             )
-        )
+        ).with_for_update()
     )
     to_activate = activate_result.scalar_one_or_none()
 
@@ -387,6 +387,7 @@ async def get_policy_history(
 @router.post("/expire-old")
 async def expire_old_policies(
     db: AsyncSession = Depends(get_db),
+    _: dict = Depends(require_admin_session),
 ):
     """
     Admin utility: expire all policies past their expiry date.

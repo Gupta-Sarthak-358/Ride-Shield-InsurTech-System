@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import { useAuth } from "../auth/AuthContext";
 import SectionHeader from "../components/SectionHeader";
@@ -27,6 +28,8 @@ export default function Auth() {
     try {
       const result = await loginWorker(workerPhone, workerPassword);
       navigate(redirectTarget || `/dashboard/${result.session.worker_id}`, { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Worker sign-in failed.");
     } finally {
       setLoading(false);
     }
@@ -38,6 +41,8 @@ export default function Auth() {
     try {
       await loginAdmin(adminUsername, adminPassword);
       navigate(redirectTarget || "/admin", { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Admin sign-in failed.");
     } finally {
       setLoading(false);
     }
