@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
 from backend.core.forecast_engine import forecast_engine
+from backend.core.fraud_model_service import fraud_model_service
 from backend.core.risk_model_service import risk_model_service
 from backend.core.session_auth import require_admin_session
 from backend.core.trigger_scheduler import trigger_scheduler
@@ -173,6 +174,7 @@ async def get_models(
     _: dict = Depends(require_admin_session),
 ):
     risk_info = risk_model_service.get_model_info()
+    fraud_info = fraud_model_service.get_model_info()
     return {
         "models": {
             "risk_model": {
@@ -186,6 +188,19 @@ async def get_models(
                 "n_samples": risk_info.get("n_samples"),
                 "fallback_used": risk_info.get("fallback_used"),
                 "last_error": risk_info.get("last_error"),
+            },
+            "fraud_model": {
+                "status": fraud_info.get("status"),
+                "version": fraud_info.get("version"),
+                "trained_at": fraud_info.get("trained_at"),
+                "roc_auc": fraud_info.get("metrics", {}).get("roc_auc"),
+                "average_precision": fraud_info.get("metrics", {}).get("average_precision"),
+                "precision": fraud_info.get("metrics", {}).get("precision"),
+                "recall": fraud_info.get("metrics", {}).get("recall"),
+                "model_type": fraud_info.get("model_type"),
+                "n_samples": fraud_info.get("n_samples"),
+                "fallback_used": fraud_info.get("fallback_used"),
+                "last_error": fraud_info.get("last_error"),
             },
             "forecast_engine": {
                 "status": "active",

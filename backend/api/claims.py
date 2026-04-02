@@ -33,6 +33,12 @@ def serialize_claim_summary(claim: Claim) -> dict:
             "completed_at": claim.payout.completed_at.isoformat() if claim.payout.completed_at else None,
         }
 
+    fraud_model = None
+    payout_breakdown = None
+    if isinstance(claim.decision_breakdown, dict):
+        fraud_model = claim.decision_breakdown.get("fraud_model")
+        payout_breakdown = claim.decision_breakdown.get("payout_breakdown")
+
     return {
         "id": str(claim.id),
         "worker_id": str(claim.worker_id),
@@ -51,6 +57,8 @@ def serialize_claim_summary(claim: Claim) -> dict:
         "trust_score": float(claim.trust_score) if claim.trust_score is not None else None,
         "final_score": float(claim.final_score) if claim.final_score is not None else None,
         "decision_breakdown": claim.decision_breakdown,
+        "fraud_model": fraud_model,
+        "payout_breakdown": payout_breakdown,
         "status": claim.status,
         "rejection_reason": claim.rejection_reason,
         "review_deadline": claim.review_deadline.isoformat() if claim.review_deadline else None,

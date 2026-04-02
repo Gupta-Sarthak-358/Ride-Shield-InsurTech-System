@@ -42,6 +42,23 @@ export default {
         body: ["Inter", "sans-serif"],
         label: ["Inter", "sans-serif"],
       },
+      animation: {
+        "icon-scale": "icon-scale 0.3s ease-out forwards",
+        skeleton: "skeleton 1.5s ease-in-out infinite",
+      },
+      keyframes: {
+        "icon-scale": {
+          "0%": { transform: "scale(1)" },
+          "100%": { transform: "scale(1.1)" },
+        },
+        skeleton: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.45" },
+        },
+      },
+      spacing: {
+        18: "4.5rem",
+      },
     },
   },
   plugins: [],

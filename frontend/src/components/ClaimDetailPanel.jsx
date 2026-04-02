@@ -25,6 +25,8 @@ export default function ClaimDetailPanel({ claim }) {
   const breakdown = claim.decision_breakdown || {};
   const inputs = breakdown.inputs || {};
   const components = breakdown.breakdown || {};
+  const payoutBreakdown = claim.payout_breakdown || breakdown.payout_breakdown || {};
+  const fraudModel = claim.fraud_model || breakdown.fraud_model || {};
   const incidentTriggers = inputs.incident_triggers || claim.decision_breakdown?.incident_triggers || [claim.trigger_type];
   const coveredTriggers = inputs.covered_triggers || claim.decision_breakdown?.covered_triggers || [];
 
@@ -54,6 +56,15 @@ export default function ClaimDetailPanel({ claim }) {
           <p className="mt-3 text-sm leading-6 text-ink/65">
             Hours affected: {claim.disruption_hours ?? "--"} - Peak multiplier: {claim.peak_multiplier ?? "--"}
           </p>
+          {payoutBreakdown.net_income_per_hour ? (
+            <div className="mt-4 space-y-1 text-sm leading-6 text-ink/70">
+              <p>Gross hourly reference: {formatCurrency(payoutBreakdown.income_per_hour)}</p>
+              <p>Net protected hourly: {formatCurrency(payoutBreakdown.net_income_per_hour)}</p>
+              <p>
+                Operating-cost factor: {Math.round(Number(payoutBreakdown.operating_cost_factor || 0) * 100)}%
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -73,6 +84,41 @@ export default function ClaimDetailPanel({ claim }) {
         <div>
           <p className="text-sm text-ink/45">Trust score</p>
           <p className="mt-2 font-semibold text-primary">{formatScore(claim.trust_score)}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="panel-quiet rounded-[24px] p-4">
+          <p className="text-sm text-ink/50">Fraud model signal</p>
+          <p className="mt-2 text-lg font-semibold text-primary">
+            {fraudModel.fraud_probability !== undefined
+              ? `${Math.round(Number(fraudModel.fraud_probability || 0) * 100)}% suspicious`
+              : "Rule-only decision"}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-ink/65">
+            {fraudModel.model_version || "rule-based"} {fraudModel.fallback_used ? "- fallback active" : "- hybrid scoring active"}
+          </p>
+          {Array.isArray(fraudModel.top_factors) && fraudModel.top_factors.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {fraudModel.top_factors.slice(0, 4).map((factor) => (
+                <span key={factor.factor || factor.label} className="pill bg-amber-100 text-amber-900">
+                  {factor.label || humanizeSlug(factor.factor)}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-ink/65">No elevated fraud factors on this claim.</p>
+          )}
+        </div>
+        <div className="panel-quiet rounded-[24px] p-4">
+          <p className="text-sm text-ink/50">Worker explanation</p>
+          <p className="mt-2 text-sm leading-7 text-ink/75">
+            {claim.status === "approved"
+              ? "This payout protects lost net earning capacity, not gross billing. Avoided trip costs are removed before the final amount is credited."
+              : claim.status === "delayed"
+                ? "This incident matched policy coverage, but the review path stayed open because fraud or confidence signals were not clean enough for zero-touch approval."
+                : "The claim was stopped because the combined disruption, confidence, trust, or fraud signals did not support a payout."}
+          </p>
         </div>
       </div>
 

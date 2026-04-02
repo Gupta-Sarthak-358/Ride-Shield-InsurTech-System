@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     POLICY_DURATION_DAYS: int = 7
     MAX_PREMIUM_CHANGE_PERCENT: int = 20
     CLUSTER_FRAUD_THRESHOLD: int = 5
+    OPERATING_COST_FACTOR: float = 0.85
 
     # Trigger Thresholds
     RAIN_THRESHOLD_MM: float = 25.0

@@ -171,7 +171,7 @@ Current enforcement:
 - fraud ML runtime integration is still pending
 - payout model still needs a net-income adjustment pass if the product story wants explicit operating-cost deduction
 - some frontend surfaces still have room for density and hierarchy tightening
-- the Tailwind `@responsive` warning in `frontend/src/index.css` is still present
+- deprecated Tailwind `@responsive` usage has been removed from `frontend/src/index.css`; restart the dev server if an old warning persists from a stale Vite/Tailwind context
 
 ## Next Architecture Step
 

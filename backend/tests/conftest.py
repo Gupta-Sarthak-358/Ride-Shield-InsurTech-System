@@ -58,6 +58,16 @@ async def admin_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
+@pytest_asyncio.fixture
+async def admin_cookies(client):
+    response = await client.post(
+        "/api/auth/admin/login",
+        json={"username": "admin", "password": "rideshield-test-admin-password"},
+    )
+    assert response.status_code == 200
+    return dict(client.cookies)
+
+
 @pytest.fixture
 def valid_worker_data():
     return {

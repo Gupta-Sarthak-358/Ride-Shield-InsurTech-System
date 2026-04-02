@@ -33,9 +33,11 @@ async def test_admin_overview_returns_scheduler_and_forecast(client):
 
 
 @pytest.mark.asyncio
-async def test_models_endpoint_returns_status(client, admin_headers):
-    response = await client.get("/api/analytics/models", headers=admin_headers)
+async def test_models_endpoint_returns_status(client, admin_cookies):
+    response = await client.get("/api/analytics/models", cookies=admin_cookies)
     assert response.status_code == 200
     data = response.json()
     assert "models" in data
     assert "risk_model" in data["models"]
+    assert "fraud_model" in data["models"]
+    assert "roc_auc" in data["models"]["fraud_model"]

@@ -99,6 +99,9 @@ This file is the practical route map for the current repo state.
 - Review queue response is an object with `claims`
 - Event history response is an object with `events`
 - Claims are incident-centric, not trigger-stack-centric
+- Claim detail now includes:
+  - `fraud_model`
+  - `payout_breakdown`
 
 ### Analytics
 - `admin-overview` is the main admin KPI payload
@@ -106,17 +109,18 @@ This file is the practical route map for the current repo state.
 - `zone-risk` is city-scoped
 - `models` is currently focused on:
   - risk model metadata
+  - fraud model metadata
   - forecast engine status
 
 ## Current ML Truth
 
 - Risk ML: integrated with safe fallback
 - Forecast engine: integrated and exposed through analytics APIs
-- Fraud ML: not integrated yet
+- Fraud ML: integrated into claim fraud scoring with rule fallback
 
 That means:
 - pricing and risk surfaces can expose model metadata
-- claim fraud decisions are still rule-based today
+- claim fraud decisions can expose fraud probability, model version, fallback state, and top factors
 
 ## Geography Rule
 

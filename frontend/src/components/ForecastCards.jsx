@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { analyticsApi } from "../api/analytics";
 import { humanizeSlug } from "../utils/formatters";
 

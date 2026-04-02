@@ -490,15 +490,16 @@ async def force_activate_policies(
     if worker_id:
         query = query.where(Policy.worker_id == worker_id)
 
-    to_activate = (await db.execute(query)).scalars().all()
+    to_activate = (await db.execute(query.with_for_update())).scalars().all()
 
     count = 0
     activated_policy_ids = []
     for policy in to_activate:
-        policy.status = "active"
-        policy.activates_at = now
-        activated_policy_ids.append(str(policy.id))
-        count += 1
+        if policy.status == "pending":
+            policy.status = "active"
+            policy.activates_at = now
+            activated_policy_ids.append(str(policy.id))
+            count += 1
 
     await db.flush()
     await db.commit()

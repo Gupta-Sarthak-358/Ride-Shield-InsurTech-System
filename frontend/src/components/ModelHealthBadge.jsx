@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Activity } from "lucide-react";
+
 import { analyticsApi } from "../api/analytics";
 
 export default function ModelHealthBadge() {
@@ -25,7 +26,19 @@ export default function ModelHealthBadge() {
     loadModels();
   }, []);
 
-  if (loading || !modelData) {
+  if (loading) {
+    return null;
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-[22px] border border-error/30 bg-error/10 p-3 text-sm text-error">
+        {error}
+      </div>
+    );
+  }
+
+  if (!modelData) {
     return null;
   }
 
@@ -34,7 +47,7 @@ export default function ModelHealthBadge() {
   const statusDot = status === "active" ? "bg-emerald-500" : "bg-amber-500";
 
   const trainedDate = modelData.trained_at ? new Date(modelData.trained_at).toLocaleDateString() : "Unknown";
-  const r2Score = modelData.r2_score ? parseFloat(modelData.r2_score).toFixed(3) : "—";
+  const r2Score = modelData.r2_score ? parseFloat(modelData.r2_score).toFixed(3) : "--";
 
   return (
     <div className="rounded-[22px] border border-surface-variant bg-surface-container p-3">

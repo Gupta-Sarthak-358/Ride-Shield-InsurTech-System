@@ -58,4 +58,5 @@ export const SCENARIOS = [
 
 export const STORAGE_KEYS = {
   workerId: "rideshield.workerId",
+  onboardingDraft: "rideshield.onboardingDraft",
 };

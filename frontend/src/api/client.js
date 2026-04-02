@@ -1,29 +1,31 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
-import { getStoredToken } from "../auth/session";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "",
+  baseURL: API_BASE_URL,
   timeout: 30000,
-});
-
-client.interceptors.request.use((config) => {
-  const token = getStoredToken();
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 client.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (!error.config || error.config._skipInterceptors) {
+      return Promise.reject(error);
+    }
+    const status = error.response?.status;
     const detail = error.response?.data?.detail;
-    const message = Array.isArray(detail) ? detail.map((item) => item.msg).join(", ") : detail || error.message;
-    if (!error.config?.skipToast) {
-      toast.error(message || "Request failed");
+    if (status === 401) {
+      window.location.href = "/auth?reason=session_expired";
+    } else if (status === 403) {
+      toast.error(detail || "You do not have permission for this action.");
+    } else if (status === 429) {
+      toast.error("Too many requests. Please wait a moment and try again.");
+    } else if (status >= 500) {
+      toast.error("A server error occurred. Please try again later.");
     }
     return Promise.reject(error);
   },

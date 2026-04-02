@@ -11,12 +11,15 @@ import { workersApi } from "../api/workers";
 import ActivePolicyCard from "../components/ActivePolicyCard";
 import ClaimDetailPanel from "../components/ClaimDetailPanel";
 import ClaimList from "../components/ClaimList";
+import DecisionPanel from "../components/DecisionPanel";
+import ErrorState from "../components/ErrorState";
 import EventPanel from "../components/EventPanel";
 import PayoutHistory from "../components/PayoutHistory";
 import RiskScoreCard from "../components/RiskScoreCard";
 import TrustBadge from "../components/TrustBadge";
 import TrustScoreGauge from "../components/TrustScoreGauge";
-import { formatCurrency, humanizeSlug, statusPill } from "../utils/formatters";
+import { formatCurrency, humanizeSlug } from "../utils/formatters";
+import { getDisruptionTone } from "../utils/toneHelpers";
 
 function claimPriority(claim) {
   if (!claim) return -1;
@@ -26,68 +29,12 @@ function claimPriority(claim) {
   return 0;
 }
 
-function DecisionPanel({ claim, narrative }) {
-  const decisionState = claim?.status || "idle";
-  const score =
-    Number.isFinite(Number(claim?.final_score)) && Number(claim?.final_score) > 0
-      ? `${Math.round(Number(claim.final_score) * 100)}% confidence`
-      : "No active score";
-
-  let heading = "No active claim needs attention right now.";
-  let reason = "RideShield is monitoring your zone and will create a claim automatically if a covered incident is verified.";
-
-  if (claim?.status === "delayed") {
-    heading = "A delayed claim needs review context.";
-    reason =
-      claim.decision_breakdown?.explanation ||
-      claim.rejection_reason ||
-      "The latest claim moved into manual review because the engine found enough uncertainty to pause payout.";
-  } else if (claim?.status === "approved") {
-    heading = "Your latest decision is already approved.";
-    reason =
-      claim.decision_breakdown?.explanation ||
-      "The latest covered incident passed policy, confidence, and fraud checks, so payout was released automatically.";
-  } else if (claim?.status === "rejected") {
-    heading = "The latest claim was rejected.";
-    reason =
-      claim.rejection_reason ||
-      claim.decision_breakdown?.explanation ||
-      "The incident failed one or more validation checks, so the payout path was closed.";
-  }
-
-  return (
-    <div className="decision-panel card-primary p-6 lg:sticky lg:top-24">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="eyebrow">Decision panel</p>
-          <h2 className="mt-3 text-2xl font-bold leading-tight text-primary">{heading}</h2>
-        </div>
-        <span className={statusPill(decisionState)}>{humanizeSlug(decisionState)}</span>
-      </div>
-
-      <div className="mt-5 flex flex-wrap gap-3">
-        <span className="pill bg-primary/8 text-primary">{score}</span>
-        {claim?.id ? <span className="pill bg-white text-ink/70">Claim {claim.id.slice(0, 6)}</span> : null}
-      </div>
-
-      <div className="mt-5 rounded-[22px] bg-white/75 p-4">
-        <p className="text-sm font-semibold text-primary">Why this matters now</p>
-        <p className="mt-3 text-sm leading-7 text-on-surface-variant">{reason}</p>
-      </div>
-
-      <div className="mt-5 rounded-[22px] border border-primary/10 bg-primary/3 p-4">
-        <p className="text-sm font-semibold text-primary">Protection narrative</p>
-        <p className="mt-3 text-sm leading-7 text-on-surface-variant">{narrative}</p>
-      </div>
-    </div>
-  );
-}
-
 export default function Dashboard() {
   const { workerId } = useParams();
   const navigate = useNavigate();
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [worker, setWorker] = useState(null);
   const [policyState, setPolicyState] = useState(null);
   const [claims, setClaims] = useState(null);
@@ -104,6 +51,7 @@ export default function Dashboard() {
     }
 
     setLoading(true);
+    setError(null);
     try {
       const [workerRes, policyRes, claimsRes, payoutsRes, eventsRes] = await Promise.all([
         workersApi.profile(effectiveWorkerId),
@@ -129,6 +77,8 @@ export default function Dashboard() {
         });
         return claimsList[0] || null;
       });
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Failed to load dashboard data.");
     } finally {
       setLoading(false);
     }
@@ -187,6 +137,10 @@ export default function Dashboard() {
     return <div className="panel p-8 text-center text-ink/60">Loading dashboard...</div>;
   }
 
+  if (error) {
+    return <ErrorState message={error} onRetry={load} />;
+  }
+
   if (!worker) {
     return (
       <div className="panel p-8">
@@ -221,6 +175,7 @@ export default function Dashboard() {
 
       <div className="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
         <section className="space-y-6">
+          {/* Hero card */}
           <div className="hero-glow hero-mesh rounded-[32px] p-8 scale-pop">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-white/80 backdrop-blur-sm">
               <ShieldCheck size={14} />
@@ -252,6 +207,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Decision + Claim detail */}
           <div className="grid items-start gap-4 xl:grid-cols-[1.02fr_0.98fr]">
             <DecisionPanel claim={urgentClaim} narrative={coverageNarrative} />
             <div className="space-y-4">
@@ -260,6 +216,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Payout + Protection status + Trust */}
           <div className="grid gap-6 grid-cols-12">
             <div className="col-span-12 md:col-span-7 context-panel p-6 border-accent-left border-accent-success">
               <div className="flex items-start justify-between gap-4">
@@ -295,7 +252,7 @@ export default function Dashboard() {
               </div>
               <p className="mt-3 text-sm text-on-surface-variant">Coverage and waiting-period aware</p>
             </div>
-            <div className="col-span-12 context-panel p-6">
+            <div className="col-span-12 context-panel p-6 pulse-glow">
               <p className="eyebrow">Trust score</p>
               <div className="mt-4">
                 <TrustScoreGauge score={worker.trust_score} />
@@ -303,6 +260,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Claims history */}
           <div className="context-panel card-secondary p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -341,20 +299,11 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {nearbyAlerts.map((event) => {
                   const disruptionLevel = Number(event.disruption_score || 0);
-                  const getBorderColor = () => {
-                    if (disruptionLevel >= 0.7) return "border-l-red-600 bg-red-50/50";
-                    if (disruptionLevel >= 0.4) return "border-l-amber-600 bg-amber-50/50";
-                    return "border-l-blue-600 bg-blue-50/50";
-                  };
-                  const getProgressColor = () => {
-                    if (disruptionLevel >= 0.7) return "bg-red-600";
-                    if (disruptionLevel >= 0.4) return "bg-amber-600";
-                    return "bg-blue-600";
-                  };
+                  const tone = getDisruptionTone(disruptionLevel);
                   return (
                     <div
                       key={event.id}
-                      className={`rounded-[16px] border-l-2 p-3 text-sm opacity-90 transition-smooth hover:shadow-md ${getBorderColor()}`}
+                      className={`rounded-[16px] border-l-2 p-3 text-sm opacity-90 transition-smooth hover:shadow-md ${tone.border}`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium text-on-surface">
@@ -366,7 +315,7 @@ export default function Dashboard() {
                       </div>
                       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
                         <div
-                          className={`h-full rounded-full transition-all ${getProgressColor()}`}
+                          className={`h-full rounded-full transition-all ${tone.progress}`}
                           style={{ width: `${Math.max(12, Math.round(disruptionLevel * 100))}%` }}
                         />
                       </div>

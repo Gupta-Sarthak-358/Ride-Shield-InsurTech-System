@@ -1,38 +1,56 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { authApi } from "../api/auth";
-import { clearStoredSession, readStoredSession, writeStoredSession } from "./session";
+
+const SESSION_KEY = "rideshield.session_meta";
+
+export function readStoredSessionMeta() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeStoredSessionMeta(meta) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(meta));
+  } catch {
+    // Storage unavailable
+  }
+}
+
+export function clearStoredSessionMeta() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // Storage unavailable
+  }
+}
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(() => readStoredSession());
+  const [session, setSession] = useState(() => readStoredSessionMeta());
   const [booting, setBooting] = useState(true);
 
   useEffect(() => {
     let active = true;
 
     async function restore() {
-      const stored = readStoredSession();
-      if (!stored?.token) {
-        if (active) {
-          setBooting(false);
-        }
-        return;
-      }
-
       try {
         const response = await authApi.me();
         if (!active) {
           return;
         }
-        const next = { token: stored.token, session: response.data.session };
+        const next = { session: response.data.session };
         setSession(next);
-        writeStoredSession(next);
+        writeStoredSessionMeta(next);
       } catch {
-        clearStoredSession();
         if (active) {
           setSession(null);
+          clearStoredSessionMeta();
         }
       } finally {
         if (active) {
@@ -51,29 +69,29 @@ export function AuthProvider({ children }) {
     () => ({
       booting,
       session,
-      isAuthenticated: Boolean(session?.token),
+      isAuthenticated: Boolean(session?.session),
       role: session?.session?.role || null,
       async loginWorker(phone, password) {
         const response = await authApi.workerLogin({ phone, password });
-        const next = response.data;
+        const next = { session: response.data.session };
         setSession(next);
-        writeStoredSession(next);
+        writeStoredSessionMeta(next);
         return next;
       },
       async loginAdmin(username, password) {
         const response = await authApi.adminLogin({ username, password });
-        const next = response.data;
+        const next = { session: response.data.session };
         setSession(next);
-        writeStoredSession(next);
+        writeStoredSessionMeta(next);
         return next;
       },
       async logout() {
         try {
           await authApi.logout();
         } catch {
-          // client clear is sufficient
+          // cookie cleared by server
         }
-        clearStoredSession();
+        clearStoredSessionMeta();
         setSession(null);
       },
     }),

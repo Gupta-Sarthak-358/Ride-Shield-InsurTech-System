@@ -147,17 +147,30 @@ class ClaimProcessor:
         affected_workers = await trigger_engine.find_affected_workers(db, zone_record, fired)
         for worker_info in affected_workers:
             for event in events:
-                claim_result = await self._process_worker_claim(
-                    db=db,
-                    worker=worker_info["worker"],
-                    policy=worker_info["policy"],
-                    event=event,
-                    disruption_score=disruption_score,
-                    event_confidence=event_confidence,
-                    trust_score=worker_info["trust_score"],
-                    covered_triggers=worker_info["covered_triggers"],
-                    fired_triggers=worker_info["fired_triggers"],
-                )
+                try:
+                    claim_result = await self._process_worker_claim(
+                        db=db,
+                        worker=worker_info["worker"],
+                        policy=worker_info["policy"],
+                        event=event,
+                        disruption_score=disruption_score,
+                        event_confidence=event_confidence,
+                        trust_score=worker_info["trust_score"],
+                        covered_triggers=worker_info["covered_triggers"],
+                        fired_triggers=worker_info["fired_triggers"],
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "worker_claim_failed worker_id=%s event_id=%s error=%s",
+                        str(worker_info["worker"].id),
+                        str(event.id),
+                        str(exc),
+                    )
+                    claim_result = {
+                        "status": "error",
+                        "payout_amount": 0,
+                        "details": {"error": str(exc)},
+                    }
                 zone_result["claim_details"].append(claim_result)
                 zone_result["claims_processed"] += 1
                 if claim_result["status"] == "approved":
@@ -169,6 +182,8 @@ class ClaimProcessor:
                     zone_result["claims_rejected"] += 1
                 elif claim_result["status"] == "duplicate":
                     zone_result["claims_duplicate"] += 1
+                elif claim_result["status"] == "error":
+                    zone_result["claims_error"] = zone_result.get("claims_error", 0) + 1
 
         logger.info(
             "zone_outcome city=%s zone=%s events_created=%s events_extended=%s covered_workers=%s claims_processed=%s claims_approved=%s claims_delayed=%s claims_rejected=%s claims_duplicate=%s total_payout=%s",
@@ -285,6 +300,23 @@ class ClaimProcessor:
             **decision_payload,
             "covered_triggers": covered_triggers,
             "incident_triggers": fired_triggers,
+            "payout_breakdown": {
+                "income_per_hour": payout_calc.get("income_per_hour"),
+                "net_income_per_hour": payout_calc.get("net_income_per_hour"),
+                "operating_cost_factor": payout_calc.get("operating_cost_factor"),
+                "peak_multiplier": payout_calc.get("peak_multiplier"),
+                "disruption_hours": disruption_hours,
+                "raw_payout": payout_calc.get("raw_payout"),
+                "final_payout": payout_calc.get("final_payout"),
+            },
+            "fraud_model": {
+                "rule_fraud_score": fraud_result.get("rule_fraud_score"),
+                "ml_fraud_score": fraud_result.get("ml_fraud_score"),
+                "fraud_probability": fraud_result.get("fraud_probability"),
+                "model_version": fraud_result.get("model_version"),
+                "fallback_used": fraud_result.get("fallback_used"),
+                "top_factors": fraud_result.get("top_factors", []),
+            },
         }
         if decision_result["decision"] == "rejected":
             claim.rejection_reason = decision_result["explanation"]
@@ -307,6 +339,9 @@ class ClaimProcessor:
                     "final_score": decision_result["final_score"],
                     "fraud_score": fraud_result["adjusted_fraud_score"],
                     "fraud_flags": fraud_result["flags"],
+                    "fraud_model_version": fraud_result.get("model_version"),
+                    "fraud_fallback_used": fraud_result.get("fallback_used"),
+                    "fraud_top_factors": fraud_result.get("top_factors", []),
                     "payout": payout_calc["final_payout"] if decision_result["decision"] == "approved" else 0,
                 },
             )

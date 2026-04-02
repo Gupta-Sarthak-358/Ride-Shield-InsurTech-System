@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import { locationsApi } from "../api/locations";
 import { policiesApi } from "../api/policies";
 import { workersApi } from "../api/workers";
+import ErrorState from "../components/ErrorState";
 import PlanCard from "../components/PlanCard";
 import PremiumCalculator from "../components/PremiumCalculator";
 import RiskGauge from "../components/RiskGauge";
@@ -32,6 +33,63 @@ const steps = [
   { id: "complete", label: "Ready" },
 ];
 
+function validateRegistration(form) {
+  const errors = {};
+  const normalizedPhone = String(form.phone || "").trim();
+
+  if (!String(form.name || "").trim()) {
+    errors.name = "Full name is required.";
+  }
+
+  if (!normalizedPhone) {
+    errors.phone = "Phone number is required.";
+  } else if (!/^\+?\d{10,15}$/.test(normalizedPhone)) {
+    errors.phone = "Use a valid worker phone number.";
+  }
+
+  if (!form.password) {
+    errors.password = "Password is required.";
+  } else if (String(form.password).length < 8) {
+    errors.password = "Use at least 8 characters.";
+  }
+
+  if (!form.confirm_password) {
+    errors.confirm_password = "Confirm the password to continue.";
+  } else if (form.password !== form.confirm_password) {
+    errors.confirm_password = "Passwords do not match.";
+  }
+
+  if (!form.zone) {
+    errors.zone = "Select an operating zone.";
+  }
+
+  if (!form.consent_given) {
+    errors.consent_given = "Consent is required before registration.";
+  }
+
+  return errors;
+}
+
+function getPasswordStrength(password) {
+  if (!password) {
+    return null;
+  }
+
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+  if (score >= 4) {
+    return { label: "Strong password", tone: "text-emerald-700" };
+  }
+  if (score >= 2) {
+    return { label: "Decent password", tone: "text-amber-700" };
+  }
+  return { label: "Weak password", tone: "text-rose-700" };
+}
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { loginWorker } = useAuth();
@@ -44,27 +102,48 @@ export default function Onboarding() {
   const [registration, setRegistration] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [policyPurchase, setPolicyPurchase] = useState(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [locationsError, setLocationsError] = useState("");
+  const [touched, setTouched] = useState({});
 
   const selectedPlanData = registration?.available_plans?.find((plan) => plan.plan_name === selectedPlan);
   const stepIndex = steps.findIndex((item) => item.id === step);
   const progressWidth = `${((stepIndex + 1) / steps.length) * 100}%`;
+  const validationErrors = useMemo(() => validateRegistration(form), [form]);
+  const passwordStrength = useMemo(() => getPasswordStrength(form.password), [form.password]);
 
   useEffect(() => {
     document.title = "Onboarding | RideShield";
   }, []);
 
   useEffect(() => {
-    loadCities();
+    try {
+      const rawDraft = window.sessionStorage.getItem(STORAGE_KEYS.onboardingDraft);
+      if (rawDraft) {
+        const draft = JSON.parse(rawDraft);
+        if (draft.form) {
+          setForm((current) => ({ ...current, ...draft.form }));
+        }
+        if (draft.registration) {
+          setRegistration(draft.registration);
+        }
+        if (draft.selectedPlan) {
+          setSelectedPlan(draft.selectedPlan);
+        }
+        if (draft.step && draft.step !== "complete") {
+          setStep(draft.step);
+        }
+      }
+    } catch {
+      window.sessionStorage.removeItem(STORAGE_KEYS.onboardingDraft);
+    } finally {
+      setDraftLoaded(true);
+    }
   }, []);
 
-  useEffect(() => {
-    if (form.city) {
-      loadZones(form.city);
-    }
-  }, [form.city]);
-
-  async function loadCities() {
+  const loadCities = useCallback(async () => {
     setLocationsLoading(true);
+    setLocationsError("");
     try {
       const response = await locationsApi.cities();
       const cities = response.data || [];
@@ -72,28 +151,90 @@ export default function Onboarding() {
       if (cities.length && !cities.some((city) => city.slug === form.city)) {
         setForm((current) => ({ ...current, city: cities[0].slug }));
       }
+    } catch {
+      setLocationsError("Worker geography could not be loaded. Retry to continue onboarding.");
     } finally {
       setLocationsLoading(false);
     }
-  }
+  }, [form.city]);
 
-  async function loadZones(citySlug) {
-    const response = await locationsApi.zones(citySlug);
-    const zones = response.data || [];
-    setZoneOptions(zones);
-    if (zones.length && !zones.some((zone) => zone.slug === form.zone)) {
-      setForm((current) => ({ ...current, zone: zones[0].slug }));
+  const loadZones = useCallback(async (citySlug) => {
+    try {
+      setLocationsError("");
+      const response = await locationsApi.zones(citySlug);
+      const zones = response.data || [];
+      setZoneOptions(zones);
+      if (zones.length && !zones.some((zone) => zone.slug === form.zone)) {
+        setForm((current) => ({ ...current, zone: zones[0].slug }));
+      }
+    } catch {
+      setLocationsError("Zones could not be loaded for the selected city.");
     }
-  }
+  }, [form.zone]);
+
+  useEffect(() => {
+    if (!draftLoaded) {
+      return;
+    }
+    loadCities();
+  }, [draftLoaded, loadCities]);
+
+  useEffect(() => {
+    if (draftLoaded && form.city) {
+      loadZones(form.city);
+    }
+  }, [draftLoaded, form.city, loadZones]);
+
+  useEffect(() => {
+    if (!draftLoaded) {
+      return;
+    }
+    if (step === "complete") {
+      window.sessionStorage.removeItem(STORAGE_KEYS.onboardingDraft);
+      return;
+    }
+    window.sessionStorage.setItem(
+      STORAGE_KEYS.onboardingDraft,
+      JSON.stringify({
+        step,
+        form,
+        registration,
+        selectedPlan,
+      }),
+    );
+  }, [draftLoaded, form, registration, selectedPlan, step]);
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function markTouched(field) {
+    setTouched((current) => ({ ...current, [field]: true }));
+  }
+
+  async function handleOpenDashboard() {
+    setLoading(true);
+    try {
+      const result = await loginWorker(form.phone, form.password);
+      navigate(`/dashboard/${result.session.worker_id}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleRegister(event) {
     event.preventDefault();
-    if (form.password !== form.confirm_password) {
-      toast.error("Passwords do not match");
+    const nextTouched = {
+      name: true,
+      phone: true,
+      password: true,
+      confirm_password: true,
+      zone: true,
+      consent_given: true,
+    };
+    setTouched((current) => ({ ...current, ...nextTouched }));
+    if (Object.keys(validationErrors).length) {
+      toast.error("Fix the highlighted registration fields first.");
       return;
     }
     setLoading(true);
@@ -112,9 +253,10 @@ export default function Onboarding() {
       setRegistration(response.data);
       setSelectedPlan(response.data.recommended_plan);
       localStorage.setItem(STORAGE_KEYS.workerId, response.data.worker_id);
-      await loginWorker(form.phone, form.password);
       setStep("plan");
-      toast.success("Worker registered");
+      toast.success("Worker registered. Choose a policy next.");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Worker registration failed.");
     } finally {
       setLoading(false);
     }
@@ -133,7 +275,10 @@ export default function Onboarding() {
       });
       setPolicyPurchase(response.data);
       setStep("complete");
+      window.sessionStorage.removeItem(STORAGE_KEYS.onboardingDraft);
       toast.success("Policy purchased");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Policy purchase failed.");
     } finally {
       setLoading(false);
     }
@@ -167,8 +312,8 @@ export default function Onboarding() {
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" className="button-primary" onClick={() => navigate("/dashboard")}>
-              Open worker dashboard
+            <button type="button" className="button-primary" disabled={loading} onClick={handleOpenDashboard}>
+              {loading ? "Opening dashboard..." : "Open worker dashboard"}
             </button>
             <button type="button" className="button-secondary" onClick={() => navigate("/auth")}>
               Sign in again later
@@ -207,25 +352,65 @@ export default function Onboarding() {
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <form className="context-panel p-6" onSubmit={handleRegister}>
             <div className="space-y-6">
+              {locationsError ? <ErrorState message={locationsError} onRetry={loadCities} /> : null}
               <div>
                 <p className="eyebrow">Identity</p>
                 <div className="mt-4 grid gap-5">
                   <div>
-                    <label className="label">Full name</label>
-                    <input className="field" value={form.name} onChange={(e) => updateField("name", e.target.value)} required />
+                    <label className="label" htmlFor="worker-name">Full name</label>
+                    <input
+                      id="worker-name"
+                      className="field"
+                      value={form.name}
+                      onBlur={() => markTouched("name")}
+                      onChange={(e) => updateField("name", e.target.value)}
+                      required
+                    />
+                    {touched.name && validationErrors.name ? <p className="mt-2 text-sm text-rose-700">{validationErrors.name}</p> : null}
                   </div>
                   <div>
-                    <label className="label">Phone number</label>
-                    <input className="field" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} required />
+                    <label className="label" htmlFor="worker-phone">Phone number</label>
+                    <input
+                      id="worker-phone"
+                      className="field"
+                      value={form.phone}
+                      onBlur={() => markTouched("phone")}
+                      onChange={(e) => updateField("phone", e.target.value)}
+                      required
+                    />
+                    {touched.phone && validationErrors.phone ? <p className="mt-2 text-sm text-rose-700">{validationErrors.phone}</p> : null}
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div>
-                      <label className="label">Password</label>
-                      <input className="field" type="password" value={form.password} onChange={(e) => updateField("password", e.target.value)} minLength={8} required />
+                      <label className="label" htmlFor="worker-password">Password</label>
+                      <input
+                        id="worker-password"
+                        className="field"
+                        type="password"
+                        value={form.password}
+                        onBlur={() => markTouched("password")}
+                        onChange={(e) => updateField("password", e.target.value)}
+                        minLength={8}
+                        required
+                      />
+                      {passwordStrength ? <p className={`mt-2 text-sm ${passwordStrength.tone}`}>{passwordStrength.label}</p> : null}
+                      {touched.password && validationErrors.password ? <p className="mt-2 text-sm text-rose-700">{validationErrors.password}</p> : null}
                     </div>
                     <div>
-                      <label className="label">Confirm password</label>
-                      <input className="field" type="password" value={form.confirm_password} onChange={(e) => updateField("confirm_password", e.target.value)} minLength={8} required />
+                      <label className="label" htmlFor="worker-confirm-password">Confirm password</label>
+                      <input
+                        id="worker-confirm-password"
+                        className="field"
+                        type="password"
+                        value={form.confirm_password}
+                        onBlur={() => markTouched("confirm_password")}
+                        onChange={(e) => updateField("confirm_password", e.target.value)}
+                        minLength={8}
+                        required
+                      />
+                      {touched.confirm_password && validationErrors.confirm_password ? (
+                        <p className="mt-2 text-sm text-rose-700">{validationErrors.confirm_password}</p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -235,8 +420,14 @@ export default function Onboarding() {
                 <p className="eyebrow">Operating area</p>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label">City</label>
-                    <select className="field" value={form.city} onChange={(e) => updateField("city", e.target.value)} disabled={locationsLoading}>
+                    <label className="label" htmlFor="worker-city">City</label>
+                    <select
+                      id="worker-city"
+                      className="field"
+                      value={form.city}
+                      onChange={(e) => updateField("city", e.target.value)}
+                      disabled={locationsLoading}
+                    >
                       {cityOptions.map((option) => (
                         <option key={option.id} value={option.slug}>
                           {option.display_name}
@@ -245,14 +436,22 @@ export default function Onboarding() {
                     </select>
                   </div>
                   <div>
-                    <label className="label">Zone</label>
-                    <select className="field" value={form.zone} onChange={(e) => updateField("zone", e.target.value)} disabled={locationsLoading || !zoneOptions.length}>
+                    <label className="label" htmlFor="worker-zone">Zone</label>
+                    <select
+                      id="worker-zone"
+                      className="field"
+                      value={form.zone}
+                      onBlur={() => markTouched("zone")}
+                      onChange={(e) => updateField("zone", e.target.value)}
+                      disabled={locationsLoading || !zoneOptions.length}
+                    >
                       {zoneOptions.map((zone) => (
                         <option key={zone.id} value={zone.slug}>
                           {zone.display_name}
                         </option>
                       ))}
                     </select>
+                    {touched.zone && validationErrors.zone ? <p className="mt-2 text-sm text-rose-700">{validationErrors.zone}</p> : null}
                   </div>
                 </div>
               </div>
@@ -261,8 +460,8 @@ export default function Onboarding() {
                 <p className="eyebrow">Earning profile</p>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label">Platform</label>
-                    <select className="field" value={form.platform} onChange={(e) => updateField("platform", e.target.value)}>
+                    <label className="label" htmlFor="worker-platform">Platform</label>
+                    <select id="worker-platform" className="field" value={form.platform} onChange={(e) => updateField("platform", e.target.value)}>
                       {PLATFORM_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -271,12 +470,12 @@ export default function Onboarding() {
                     </select>
                   </div>
                   <div>
-                    <label className="label">Working hours per day</label>
-                    <input className="field" type="number" step="0.5" value={form.working_hours} onChange={(e) => updateField("working_hours", e.target.value)} />
+                    <label className="label" htmlFor="worker-hours">Working hours per day</label>
+                    <input id="worker-hours" className="field" type="number" step="0.5" value={form.working_hours} onChange={(e) => updateField("working_hours", e.target.value)} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="label">Self-reported daily income</label>
-                    <input className="field" type="number" value={form.self_reported_income} onChange={(e) => updateField("self_reported_income", e.target.value)} />
+                    <label className="label" htmlFor="worker-income">Self-reported daily income</label>
+                    <input id="worker-income" className="field" type="number" value={form.self_reported_income} onChange={(e) => updateField("self_reported_income", e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -286,10 +485,14 @@ export default function Onboarding() {
                   className="mt-1"
                   type="checkbox"
                   checked={form.consent_given}
+                  onBlur={() => markTouched("consent_given")}
                   onChange={(e) => updateField("consent_given", e.target.checked)}
                 />
                 <span>Worker consents to location, behavior, and device data being used for claim validation and fraud checks.</span>
               </label>
+              {touched.consent_given && validationErrors.consent_given ? (
+                <p className="text-sm text-rose-700">{validationErrors.consent_given}</p>
+              ) : null}
 
               <button type="submit" className="button-primary" disabled={loading || locationsLoading || !form.consent_given || !form.zone}>
                 {loading ? "Calculating risk profile..." : "Register worker"}

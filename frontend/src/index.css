@@ -341,10 +341,13 @@
   }
 
   /* Responsive typography */
-  @responsive {
-    .text-hero {
-      @apply text-5xl font-extrabold tracking-tight md:text-7xl;
-    }
+  .text-hero {
+    @apply text-5xl font-extrabold tracking-tight md:text-7xl;
+  }
+
+  /* Decorative orb — used for hero section background glow bubbles */
+  .bg-orb {
+    @apply absolute rounded-full blur-3xl pointer-events-none;
   }
 
   /* Negative margin helpers for overlapping layouts */
@@ -409,5 +412,22 @@
 
   .bg-transition {
     @apply transition-[background-color] duration-300;
+  }
+
+  /* Accessibility: disable animations for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-glow,
+    .fade-in-up,
+    .scale-pop,
+    .slide-in-left,
+    .slide-in-right,
+    .pulse-ring {
+      animation: none;
+    }
+    .transition-smooth,
+    .group-hover-scale,
+    .card-hover {
+      transition: none;
+    }
   }
 }

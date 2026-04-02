@@ -14,26 +14,33 @@ Sprint 4A covered the first safe ML integration slice:
 - analytics endpoints for forecast and model status
 - frontend surfaces for risk, forecast, and model visibility
 
-Sprint 4A did not include runtime fraud ML integration.
+Sprint 4A started with risk and forecast integration. The repo has now moved beyond that slice and includes runtime fraud ML integration as well.
 
 ## Implemented
 
 ### Backend
 - `backend/ml/`
 - `backend/ml/features/risk_features.py`
+- `backend/ml/features/fraud_features.py`
 - `backend/ml/risk_model.py`
+- `backend/ml/fraud_model.py`
 - `backend/ml/train/generate_risk_data.py`
 - `backend/ml/train/train_risk_model.py`
+- `backend/ml/train/train_fraud_model.py`
 - `backend/ml/explainability.py`
 - `backend/core/risk_model_service.py`
+- `backend/core/fraud_model_service.py`
 - `backend/core/forecast_engine.py`
 
 ### Runtime wiring
 - `backend/core/risk_scorer.py`
 - `backend/core/premium_calculator.py`
+- `backend/core/fraud_detector.py`
+- `backend/core/claim_processor.py`
 - `backend/api/workers.py`
 - `backend/api/policies.py`
 - `backend/api/analytics.py`
+- `backend/api/claims.py`
 
 ### Analytics routes added
 - `GET /api/analytics/forecast`
@@ -53,17 +60,13 @@ Sprint 4A did not include runtime fraud ML integration.
 - premium surfaces can expose model metadata
 - forecast engine powers admin/intelligence surfaces
 - model status is visible in analytics/admin UI
+- fraud model scoring is blended into claim fraud routing with rule fallback
+- claim detail and review surfaces expose payout and fraud-model reasoning
 
-### Still heuristic or rule-based
-- fraud detector
-- claim fraud routing
-- final claim review logic for suspicious cases
-
-### Deferred
-- fraud feature builder
-- fraud model trainer
-- fraud model service
-- blended ML fraud score in claim processing
+### Still simplified
+- fraud model training data is synthetic
+- GPS / device telemetry realism is not integrated
+- payout explanation is stronger than before, but still simplified for demo use
 
 ## Verification State
 
@@ -73,8 +76,9 @@ Verified in this repo:
 - worker risk view compiles and reads current backend contracts
 - forecast and model metadata endpoints exist
 
-Known constraint:
+Known constraints:
 - ML artifacts are local runtime outputs and should not be treated as committed source assets
+- fraud metrics come from synthetic training and should be presented as demo-grade, not production-calibrated
 
 ## Why This Matters
 
@@ -84,14 +88,12 @@ Sprint 4A changed RideShield from:
 to:
 - hybrid runtime product with real risk-model integration and forecast visibility
 
-But it did not finish the fraud ML story.
+The fraud ML story is now implemented, but still needs future realism improvements rather than first-time integration.
 
-## Next Step: Sprint 4B
+## Next Step
 
-Sprint 4B should focus on:
-1. fraud feature extraction
-2. fraud model training
-3. runtime fraud model service
-4. blended rule + ML fraud scoring
-5. claim processor integration
-6. fraud explainability in admin review surfaces
+The next slice should focus on:
+1. better fraud-data realism and calibration
+2. worker-side payout/fraud explanation polish
+3. richer end-to-end scenario coverage
+4. GPS/device anomaly simulation if needed later

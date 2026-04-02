@@ -14,13 +14,13 @@ export default function ScenarioCard({ scenario, running, result, thresholds, on
   const firedTriggers = zoneResult?.triggers_fired || [];
 
   return (
-    <div className="panel overflow-hidden p-6">
+    <div className="group panel overflow-hidden p-6 card-hover transition-smooth">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Scenario</p>
           <h3 className="mt-2 text-2xl font-bold text-primary">{scenario.title}</h3>
         </div>
-        <button type="button" onClick={() => onRun(scenario.id)} disabled={running} className="button-primary !rounded-xl !px-4 !py-2 text-sm">
+        <button type="button" onClick={() => onRun(scenario.id)} disabled={running} className="button-primary !rounded-xl !px-4 !py-2 text-sm transition-smooth group-hover:brightness-110">
           <Play size={16} />
           {running ? "Running" : "Run"}
         </button>

@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
-from fastapi import Header, HTTPException, status
+from fastapi import Cookie, Header, HTTPException, status
 
 from backend.config import settings
 from backend.utils.time import utc_now_naive
@@ -100,21 +100,37 @@ def parse_bearer_token(authorization: str | None) -> str:
     return parts[1]
 
 
-async def get_current_session(authorization: str | None = Header(default=None)) -> Dict[str, Any]:
-    token = parse_bearer_token(authorization)
+def parse_cookie_or_bearer(cookie_token: str | None, authorization: str | None) -> str:
+    if cookie_token:
+        return cookie_token
+    return parse_bearer_token(authorization)
+
+
+async def get_current_session(
+    rideshield_session: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
+) -> Dict[str, Any]:
+    token = parse_cookie_or_bearer(cookie_token=rideshield_session, authorization=authorization)
     return verify_session_token(token)
 
 
-async def require_authenticated_session(authorization: str | None = Header(default=None)) -> Dict[str, Any]:
-    return verify_session_token(parse_bearer_token(authorization))
+async def require_authenticated_session(
+    rideshield_session: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
+) -> Dict[str, Any]:
+    token = parse_cookie_or_bearer(cookie_token=rideshield_session, authorization=authorization)
+    return verify_session_token(token)
 
 
 async def get_admin_session(session: Dict[str, Any] = Header(default=None)):  # type: ignore[assignment]
     raise RuntimeError("Use require_admin_session dependency wrapper instead.")
 
 
-async def require_admin_session(authorization: str | None = Header(default=None)) -> Dict[str, Any]:
-    session = verify_session_token(parse_bearer_token(authorization))
+async def require_admin_session(
+    rideshield_session: str | None = Cookie(default=None),
+    authorization: str | None = Header(default=None),
+) -> Dict[str, Any]:
+    session = verify_session_token(parse_cookie_or_bearer(cookie_token=rideshield_session, authorization=authorization))
     if session.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

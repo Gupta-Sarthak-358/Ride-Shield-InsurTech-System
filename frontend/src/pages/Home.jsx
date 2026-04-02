@@ -60,9 +60,19 @@ export default function Home() {
   return (
     <div className="space-y-12">
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="hero-glow hero-mesh rounded-[36px] p-8 sm:p-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/60">RideShield system</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl">{heroTitle}</h1>
+        <div className="hero-glow hero-mesh rounded-[36px] p-8 sm:p-10 fade-in-up">
+          {/* Eyebrow badge */}
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+            <ShieldCheck size={13} />
+            <span>Autonomous guardian</span>
+          </div>
+
+          <h1 className="mt-6 max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+            {heroTitle}
+            <span className="hero-subtitle mt-2 block text-3xl font-bold sm:text-4xl">
+              Zero-touch. Always on.
+            </span>
+          </h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-white/78 sm:text-lg">{heroDescription}</p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -79,15 +89,15 @@ export default function Home() {
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-[24px] bg-white/10 p-4">
+            <div className="rounded-[24px] bg-white/10 p-4 transition-smooth hover:bg-white/15">
               <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">Claim model</p>
               <p className="mt-2 text-lg font-semibold">Incident-first</p>
             </div>
-            <div className="rounded-[24px] bg-white/10 p-4">
+            <div className="rounded-[24px] bg-white/10 p-4 transition-smooth hover:bg-white/15">
               <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">Trigger loop</p>
               <p className="mt-2 text-lg font-semibold">Scheduler + demo override</p>
             </div>
-            <div className="rounded-[24px] bg-white/10 p-4">
+            <div className="rounded-[24px] bg-white/10 p-4 transition-smooth hover:bg-white/15">
               <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">Coverage story</p>
               <p className="mt-2 text-lg font-semibold">Zero manual filing</p>
             </div>
@@ -95,7 +105,7 @@ export default function Home() {
         </div>
 
         <div className="editorial-grid">
-          <div className="context-panel p-6">
+          <div className="context-panel p-6 pulse-glow">
             <p className="eyebrow">System promise</p>
             <p className="mt-3 text-2xl font-bold leading-tight text-primary">
               Workers are informed. The system does the filing, scoring, and payout orchestration.
@@ -107,13 +117,13 @@ export default function Home() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="context-panel p-6">
+            <div className="context-panel p-6 card-hover transition-smooth">
               <p className="text-sm text-ink/55">Worker surface</p>
               <p className="mt-2 text-lg font-semibold text-primary">
                 Coverage, incidents, payout history, and decision explanations in one calm, readable view.
               </p>
             </div>
-            <div className="context-panel p-6">
+            <div className="context-panel p-6 card-hover transition-smooth">
               <p className="text-sm text-ink/55">Admin surface</p>
               <p className="mt-2 text-lg font-semibold text-primary">
                 Review queue, disruption pressure, fraud visibility, scheduler health, and city-aware monitoring.
@@ -137,8 +147,8 @@ export default function Home() {
               idx === 0 ? "col-span-12 md:col-span-7" : idx === 1 ? "col-span-12 md:col-span-5" : "col-span-12";
             const cardHeight = idx === 0 ? "min-h-64" : "";
             return (
-              <div key={title} className={`${colSpan} rounded-[28px] bg-white/10 p-8 backdrop-blur-sm ${cardHeight}`}>
-                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/10 text-white transition-smooth hover:scale-110">
+              <div key={title} className={`${colSpan} group rounded-[28px] bg-white/10 p-8 backdrop-blur-sm ${cardHeight} card-hover transition-smooth border border-transparent hover:border-white/10`}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-white/10 text-white transition-smooth group-hover:scale-110 group-hover:bg-white/20">
                   <Icon size={26} />
                 </div>
                 <h3 className="mt-6 text-2xl font-bold leading-tight">{title}</h3>

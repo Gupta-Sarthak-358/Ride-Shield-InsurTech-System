@@ -59,6 +59,30 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                 </div>
               </div>
 
+              <div className="mb-4 rounded-[18px] border border-primary/8 bg-white/65 p-3">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-ink/55">
+                  <span className="font-semibold text-primary">
+                    {incident.fraud_model_version || "rule-based"} {incident.fraud_fallback_used ? "- fallback" : "- hybrid active"}
+                  </span>
+                  <span>
+                    Fraud probability {incident.max_fraud_probability === null || incident.max_fraud_probability === undefined
+                      ? "--"
+                      : `${Math.round(Number(incident.max_fraud_probability || 0) * 100)}%`}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {incident.top_factors?.length ? (
+                    incident.top_factors.map((factor) => (
+                      <span key={factor.factor} className="pill bg-white text-ink/65">
+                        {factor.label}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-ink/45">No ML fraud factors available for this incident.</span>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   {incident.claims.map((claim) => (

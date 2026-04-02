@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Activity, PlayCircle, Radar, RotateCcw, ShieldAlert, UserPlus2, Wallet } from "lucide-react";
 
 import { claimsApi } from "../api/claims";
@@ -8,6 +8,7 @@ import { payoutsApi } from "../api/payouts";
 import { policiesApi } from "../api/policies";
 import { triggersApi } from "../api/triggers";
 import { workersApi } from "../api/workers";
+import CausalityFlow from "../components/CausalityFlow";
 import ScenarioCard from "../components/ScenarioCard";
 import { SCENARIOS } from "../utils/constants";
 import { formatCurrency, formatDateTime, formatPercent, humanizeSlug } from "../utils/formatters";
@@ -32,6 +33,13 @@ function buildActivityLog(latestResult, city) {
   ];
 }
 
+const causalitySteps = [
+  { icon: Radar, label: "Signal ingest", text: "Threshold cross" },
+  { icon: ShieldAlert, label: "Validation", text: "Incident created" },
+  { icon: PlayCircle, label: "Processing", text: "Claims verified" },
+  { icon: Wallet, label: "Settlement", text: "Payout issued" },
+];
+
 export default function DemoRunner() {
   const [selectedCity, setSelectedCity] = useState("delhi");
   const [runningScenario, setRunningScenario] = useState("");
@@ -48,28 +56,16 @@ export default function DemoRunner() {
     document.title = "Simulation Control | RideShield";
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [selectedCity]);
-
-  useEffect(() => {
-    setResults({});
-  }, [selectedCity]);
-
-  useEffect(() => {
-    loadLocationConfig();
-  }, []);
-
-  async function loadLocationConfig() {
+  const loadLocationConfig = useCallback(async () => {
     const response = await locationsApi.config();
     const data = response.data || { cities: [], zones: [] };
     setLocations(data);
     if (data.cities?.length && !data.cities.some((city) => city.slug === selectedCity)) {
       setSelectedCity(data.cities[0].slug);
     }
-  }
+  }, [selectedCity]);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     const [claimStatsRes, payoutStatsRes, statusRes, configRes] = await Promise.all([
       claimsApi.stats({ days: 30 }),
       payoutsApi.stats({ days: 30 }),
@@ -80,7 +76,19 @@ export default function DemoRunner() {
     setPayoutStats(payoutStatsRes.data);
     setStatus(statusRes.data);
     setConfig(configRes.data);
-  }
+  }, [selectedCity]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    setResults({});
+  }, [selectedCity]);
+
+  useEffect(() => {
+    loadLocationConfig();
+  }, [loadLocationConfig]);
 
   async function handleRun(scenarioId) {
     setRunningScenario(scenarioId);
@@ -201,10 +209,15 @@ export default function DemoRunner() {
               </div>
             ) : null}
 
+            {/* Scenario grid — bento layout with varying spans */}
             <div className="grid grid-cols-12 gap-5">
               {SCENARIOS.map((scenario, idx) => {
                 const colSpanClass =
-                  idx === 0 ? "col-span-12 lg:col-span-8" : idx === 1 ? "col-span-12 md:col-span-6 lg:col-span-4" : "col-span-12 md:col-span-6";
+                  idx === 0
+                    ? "col-span-12 lg:col-span-8"
+                    : idx === 1
+                      ? "col-span-12 md:col-span-6 lg:col-span-4"
+                      : "col-span-12 md:col-span-6";
                 return (
                   <div key={scenario.id} className={colSpanClass}>
                     <ScenarioCard
@@ -220,39 +233,19 @@ export default function DemoRunner() {
             </div>
           </div>
 
-          <div className="context-panel p-6">
-            <div className="mb-6 flex items-center gap-3">
+          {/* Causality flow — extracted component */}
+          <div>
+            <div className="mb-4 flex items-center gap-3 px-1">
               <Activity size={18} className="text-primary" />
               <h3 className="text-xl font-bold text-primary">Automation Logic: Causality Flow</h3>
             </div>
-            <div className="relative grid gap-6 md:grid-cols-4">
-              <div className="absolute left-[10%] right-[10%] top-8 hidden h-1 bg-gradient-to-r from-primary/10 via-primary/30 to-primary/10 md:block" />
-              {[
-                { icon: Radar, label: "Signal ingest", text: "Threshold cross" },
-                { icon: ShieldAlert, label: "Validation", text: "Incident created" },
-                { icon: PlayCircle, label: "Processing", text: "Claims verified" },
-                { icon: Wallet, label: "Settlement", text: "Payout issued" },
-              ].map(({ icon: Icon, label, text }) => (
-                <div key={label} className="relative z-10">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-primary shadow-[0_10px_25px_rgba(26,28,25,0.12)] transition-smooth hover:scale-110 hover:shadow-[0_15px_35px_rgba(26,28,25,0.16)]">
-                      <Icon size={24} />
-                    </div>
-                    <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.24em] text-ink/45">{label}</p>
-                    <p className="mt-2 text-sm font-semibold leading-tight text-primary">{text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="mt-8 text-sm leading-7 text-ink/65">
-              The scenario button does not create claims directly. It changes the environment, then the actual RideShield
-              engine applies thresholds, merges incidents, scores claims, and decides payouts.
-            </p>
+            <CausalityFlow steps={causalitySteps} />
           </div>
         </section>
 
         <aside className="space-y-4">
-          <div className="decision-panel p-6">
+          {/* Results summary — scale-pop when data arrives */}
+          <div className={`decision-panel p-6 ${latestResult ? "scale-pop" : ""}`}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-primary">Results summary</h3>
               <span className="rounded-full bg-surface-container-low px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-on-surface-variant">

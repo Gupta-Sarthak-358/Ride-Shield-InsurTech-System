@@ -7,96 +7,22 @@ import { eventsApi } from "../api/events";
 import { locationsApi } from "../api/locations";
 import { payoutsApi } from "../api/payouts";
 import DisruptionMap from "../components/DisruptionMap";
+import ErrorState from "../components/ErrorState";
 import EventPanel from "../components/EventPanel";
 import ForecastCards from "../components/ForecastCards";
+import KpiTile from "../components/KpiTile";
 import ModelHealthBadge from "../components/ModelHealthBadge";
+import NextDecisionPanel from "../components/NextDecisionPanel";
 import ReviewQueue from "../components/ReviewQueue";
 import { groupClaimsByIncident } from "../utils/claimGroups";
-import { formatCurrency, formatPercent, formatRelative, humanizeSlug, statusPill } from "../utils/formatters";
-
-function KpiTile({ label, value, hint, accent = "default" }) {
-  const accentClass = {
-    default: "bg-surface-container-lowest",
-    soft: "bg-surface-container-low",
-    dark: "bg-[radial-gradient(circle_at_top_right,_rgba(133,189,188,0.16),_transparent_30%),linear-gradient(135deg,#003535_0%,#0d4d4d_100%)] text-on-primary",
-  }[accent];
-
-  return (
-    <div className={`rounded-[22px] border border-outline-variant/40 p-5 shadow-[0_12px_30px_rgba(26,28,25,0.05)] ${accentClass}`}>
-      <p
-        className={`text-[11px] font-bold uppercase tracking-[0.24em] ${
-          accent === "dark" ? "text-white/55" : "text-on-surface-variant"
-        }`}
-      >
-        {label}
-      </p>
-      <p className={`mt-3 text-4xl font-bold ${accent === "dark" ? "text-white" : "text-primary"}`}>{value}</p>
-      <p className={`mt-2 text-sm ${accent === "dark" ? "text-white/75" : "text-on-surface-variant"}`}>{hint}</p>
-    </div>
-  );
-}
-
-function NextDecisionPanel({ incident }) {
-  if (!incident) {
-    return (
-      <div className="decision-panel p-6">
-        <p className="eyebrow">Next decision</p>
-        <h3 className="mt-3 text-2xl font-bold text-primary">No delayed claim needs action right now.</h3>
-        <p className="mt-4 text-sm leading-7 text-on-surface-variant">
-          The review queue is clear. Logs, incidents, and forecast cards below are supporting context rather than active
-          blockers.
-        </p>
-      </div>
-    );
-  }
-
-  const triggerTypes = Array.isArray(incident.trigger_types)
-    ? incident.trigger_types
-    : incident.trigger_type
-      ? [incident.trigger_type]
-      : [];
-
-  return (
-    <div className="decision-panel p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow">Next decision</p>
-          <h3 className="mt-3 text-2xl font-bold text-primary">{incident.worker_name}</h3>
-        </div>
-        <span className={statusPill(incident.status)}>{humanizeSlug(incident.status)}</span>
-      </div>
-
-      <p className="mt-4 text-sm leading-7 text-on-surface-variant">
-        {(triggerTypes.length ? triggerTypes.map(humanizeSlug).join(", ") : "No trigger context")} - {humanizeSlug(incident.zone || "zone")}
-      </p>
-
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-[20px] bg-white/75 p-4">
-          <p className="text-sm text-on-surface-variant">Fraud score</p>
-          <p className="mt-2 text-2xl font-bold text-primary">{Math.round(Number(incident.max_fraud_score || 0) * 100)}%</p>
-        </div>
-        <div className="rounded-[20px] bg-white/75 p-4">
-          <p className="text-sm text-on-surface-variant">Payout at risk</p>
-          <p className="mt-2 text-2xl font-bold text-primary">{formatCurrency(incident.total_calculated_payout)}</p>
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-[20px] border border-primary/10 bg-primary/3 p-4">
-        <p className="text-sm font-semibold text-primary">Why this is surfaced first</p>
-        <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-          This grouped incident is already delayed and should be resolved before the passive logs below. Operational
-          review should start here, not in the feed history.
-        </p>
-      </div>
-    </div>
-  );
-}
+import { formatCurrency, formatPercent, formatRelative, humanizeSlug } from "../utils/formatters";
 
 export default function AdminPanel() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedZone, setSelectedZone] = useState("all");
   const [cityOptions, setCityOptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [claimStats, setClaimStats] = useState(null);
   const [payoutStats, setPayoutStats] = useState(null);
   const [queue, setQueue] = useState(null);
@@ -124,6 +50,7 @@ export default function AdminPanel() {
 
   async function load() {
     setLoading(true);
+    setLoadError(null);
     try {
       const [claimsRes, payoutsRes, queueRes, eventsRes, historyRes, analyticsRes] = await Promise.all([
         claimsApi.stats({ days: 14 }),
@@ -138,6 +65,8 @@ export default function AdminPanel() {
       setQueue(queueRes.data);
       setEvents([...(eventsRes.data.events || []), ...(historyRes.data.events || []).slice(0, 6)]);
       setAnalytics(analyticsRes.data);
+    } catch (err) {
+      setLoadError(err?.response?.data?.detail || "Failed to load admin panel data.");
     } finally {
       setLoading(false);
     }
@@ -186,6 +115,10 @@ export default function AdminPanel() {
     return <div className="panel p-8 text-center text-ink/60">Loading admin panel...</div>;
   }
 
+  if (loadError) {
+    return <ErrorState message={loadError} onRetry={load} />;
+  }
+
   return (
     <div className="space-y-8">
       <section className="mb-6 flex items-end justify-between gap-6">
@@ -227,23 +160,24 @@ export default function AdminPanel() {
         </div>
       </section>
 
-      <div className="grid gap-4 grid-cols-12">
-        <div className="col-span-12 sm:col-span-6 md:col-span-3 lg:col-span-2">
+      {/* KPI row — bento-grid with 6-tile layout */}
+      <div className="bento-grid">
+        <div className="bento-1-4">
           <KpiTile label="Claims" value={claimStats?.total_claims ?? 0} hint={`Approval ${formatPercent(claimStats?.approval_rate)}`} />
         </div>
-        <div className="col-span-12 sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <div className="bento-1-4">
           <KpiTile label="Approval" value={formatPercent(claimStats?.approval_rate)} hint={`Delayed ${formatPercent(claimStats?.delayed_rate)}`} />
         </div>
-        <div className="col-span-12 sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <div className="bento-1-4">
           <KpiTile label="Delayed" value={claimStats?.delayed ?? 0} hint={`${queue?.overdue_count ?? 0} overdue`} />
         </div>
-        <div className="col-span-12 sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <div className="bento-1-4">
           <KpiTile label="Fraud rate" value={formatPercent(claimStats?.fraud_rate)} hint="Detection window" />
         </div>
-        <div className="col-span-12 sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <div className="bento-1-4">
           <KpiTile label="Payout vol." value={formatCurrency(payoutStats?.total_amount)} hint={`${payoutStats?.total_payouts ?? 0} transfers`} />
         </div>
-        <div className="col-span-12 sm:col-span-6 md:col-span-3 lg:col-span-2">
+        <div className="bento-1-4">
           <KpiTile label="Health" value="99.98%" hint="Pipeline stable" accent="dark" />
         </div>
       </div>

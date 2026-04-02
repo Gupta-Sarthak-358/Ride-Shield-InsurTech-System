@@ -7,6 +7,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 from backend.database import Base
 from backend.utils.time import utc_now_naive
 
@@ -75,12 +76,22 @@ class Policy(Base):
     worker = relationship("Worker", back_populates="policies")
     claims = relationship("Claim", back_populates="policy", lazy="selectin")
 
-    @property
+    @hybrid_property
     def is_active(self):
         now = utc_now_naive()
         return (
             self.status == "active" and
             self.activates_at <= now <= self.expires_at
+        )
+
+    @is_active.expression
+    def is_active(cls):
+        from sqlalchemy import and_, cast, Boolean
+        now = utc_now_naive()
+        return and_(
+            cls.status == "active",
+            cls.activates_at <= now,
+            cls.expires_at >= now,
         )
 
     def __repr__(self):

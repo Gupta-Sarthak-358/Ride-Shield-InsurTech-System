@@ -4,8 +4,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import AppFrame from "./components/AppFrame";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PublicShell from "./components/PublicShell";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const Home = lazy(() => import("./pages/Home"));
@@ -39,101 +39,91 @@ function RedirectIfAuth({ children }) {
 }
 
 function AppShell() {
-  const { session } = useAuth();
-
   return (
     <div className="min-h-screen text-ink">
       <Suspense fallback={<div className="panel m-6 p-8 text-center text-ink/60">Loading page...</div>}>
         <Routes>
-          <Route
-            path="/"
-            element={(
-              <div className="mx-auto min-h-screen max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-                <Navbar session={session?.session} />
-                <Home />
-              </div>
-            )}
-          />
-          <Route
-            path="/how-it-works"
-            element={(
-              <div className="mx-auto min-h-screen max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-                <Navbar session={session?.session} />
-                <HowItWorks />
-              </div>
-            )}
-          />
+          {/* Public routes — all share PublicShell (navbar + max-width container) */}
+          <Route path="/" element={<PublicShell><Home /></PublicShell>} />
+
+          <Route path="/how-it-works" element={<PublicShell><HowItWorks /></PublicShell>} />
+
           <Route
             path="/auth"
-            element={(
-              <div className="mx-auto min-h-screen max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-                <Navbar session={session?.session} />
+            element={
+              <PublicShell>
                 <RedirectIfAuth>
                   <Auth />
                 </RedirectIfAuth>
-              </div>
-            )}
+              </PublicShell>
+            }
           />
+
           <Route
             path="/onboarding"
-            element={(
-              <div className="mx-auto min-h-screen max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-                <Navbar session={session?.session} />
+            element={
+              <PublicShell>
                 <RedirectIfAuth>
                   <Onboarding />
                 </RedirectIfAuth>
-              </div>
-            )}
+              </PublicShell>
+            }
           />
+
+          {/* Protected routes — AppFrame provides sidebar + header */}
           <Route
             path="/dashboard"
-            element={(
+            element={
               <ProtectedRoute role="worker">
                 <AppFrame>
                   <Dashboard />
                 </AppFrame>
               </ProtectedRoute>
-            )}
+            }
           />
+
           <Route
             path="/dashboard/:workerId"
-            element={(
+            element={
               <ProtectedRoute role="worker">
                 <AppFrame>
                   <Dashboard />
                 </AppFrame>
               </ProtectedRoute>
-            )}
+            }
           />
+
           <Route
             path="/intelligence"
-            element={(
+            element={
               <ProtectedRoute role="admin">
                 <AppFrame>
                   <IntelligenceOverview />
                 </AppFrame>
               </ProtectedRoute>
-            )}
+            }
           />
+
           <Route
             path="/admin"
-            element={(
+            element={
               <ProtectedRoute role="admin">
                 <AppFrame>
                   <AdminPanel />
                 </AppFrame>
               </ProtectedRoute>
-            )}
+            }
           />
+
           <Route
             path="/demo"
-            element={(
+            element={
               <ProtectedRoute role="admin">
                 <AppFrame>
                   <DemoRunner />
                 </AppFrame>
               </ProtectedRoute>
-            )}
+            }
           />
         </Routes>
       </Suspense>

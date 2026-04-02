@@ -139,7 +139,7 @@ export default function AppFrame({ children }) {
         <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:px-8 lg:pb-8">{children}</div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-black/5 bg-surface-container-lowest/95 px-4 py-3 backdrop-blur-xl lg:hidden">
+      <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t border-black/5 bg-surface-container-lowest/95 px-4 py-3 backdrop-blur-xl lg:hidden ${navItems.length <= 1 ? "hidden" : ""}`}>
         <div className="mx-auto flex max-w-xl items-center justify-around">
           {navItems.map((item) => (
             <NavLink

@@ -36,9 +36,12 @@ Important product rule:
 
 ### ML / Forecast Layer
 - `backend/core/risk_model_service.py`
+- `backend/core/fraud_model_service.py`
 - `backend/core/forecast_engine.py`
 - `backend/ml/risk_model.py`
+- `backend/ml/fraud_model.py`
 - `backend/ml/features/risk_features.py`
+- `backend/ml/features/fraud_features.py`
 - `backend/ml/explainability.py`
 
 ### Frontend Surfaces
@@ -58,15 +61,13 @@ Important product rule:
 - payout execution
 - DB-backed geography
 - risk-model-backed risk surface with fallback
+- hybrid fraud scoring with ML + rule fallback
 - forecast analytics and model-status endpoints
 
-### Still rule-based
-- fraud scoring
-- claim fraud routing
-
-### Not integrated yet
-- runtime fraud ML model
-- blended ML fraud score in claim processing
+### Still simulated or simplified
+- external disruption feeds
+- synthetic fraud-model training data
+- device or GPS telemetry realism
 
 ## Local Setup
 
@@ -121,6 +122,8 @@ This starts:
    - claim decision cluster
    - payouts
    - risk score and explanation
+   - payout breakdown with operating-cost adjustment
+   - fraud review context when a claim is delayed
    - nearby incidents
 
 ## Admin Workflow
@@ -132,6 +135,7 @@ This starts:
    - review queue / next decision
    - scheduler state
    - model status
+   - fraud probability and top suspicious factors
    - incident feed
    - integrity preview
    - forecast horizon
@@ -168,6 +172,7 @@ It is for:
 - fraud/trust/decision relationships
 - current system indicators
 - forecast bands and KPI interpretation
+- risk and fraud model status / metrics
 
 It is not the same thing as the admin decision queue.
 

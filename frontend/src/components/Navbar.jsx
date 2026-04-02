@@ -14,7 +14,7 @@ export default function Navbar({ session }) {
     navigate("/auth");
   }
 
-  const navItems = session?.role === "admin"
+  const navItems = session?.session?.role === "admin"
     ? [
         { to: "/intelligence", label: "Intelligence" },
         { to: "/demo", label: "Demo Runner" },
@@ -23,7 +23,7 @@ export default function Navbar({ session }) {
     : [
         { to: "/how-it-works", label: "How It Works" },
         { to: "/onboarding", label: "Onboarding" },
-        ...(session?.role === "worker" ? [{ to: "/dashboard", label: "Dashboard" }] : []),
+        ...(session?.session?.role === "worker" ? [{ to: "/dashboard", label: "Dashboard" }] : []),
       ];
 
   return (
@@ -59,7 +59,7 @@ export default function Navbar({ session }) {
           <div className="hidden items-center gap-3 lg:flex">
             <div className="items-center gap-2 rounded-full bg-emerald-50/90 px-3 py-2 text-sm font-medium text-emerald-800 lg:flex">
               <Sparkles size={16} />
-              <span>{session ? `${session.role}: ${session.name || session.username}` : "Monitoring ready"}</span>
+              <span>{session?.session ? `${session.session.role}: ${session.session.name || session.session.username}` : "Monitoring ready"}</span>
             </div>
             {session ? (
               <button type="button" onClick={handleLogout} className="button-secondary !rounded-xl !px-3 !py-2 text-sm">

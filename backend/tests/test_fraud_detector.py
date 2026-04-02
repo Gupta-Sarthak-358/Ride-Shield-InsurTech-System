@@ -101,6 +101,19 @@ async def create_worker_policy_event(profile: str):
                         recorded_at=now - timedelta(hours=2) + timedelta(minutes=i * 20),
                     )
                 )
+        elif profile == "fraud":
+            for i in range(4):
+                db.add(
+                    WorkerActivity(
+                        worker_id=worker.id,
+                        zone="central_delhi",
+                        latitude=Decimal("28.6500") + Decimal(str(i * 0.001)),
+                        longitude=Decimal("77.2300") + Decimal(str(i * 0.002)),
+                        speed_kmh=Decimal("85"),
+                        has_delivery_stop=False,
+                        recorded_at=now - timedelta(hours=1) + timedelta(minutes=i * 10),
+                    )
+                )
 
         await db.commit()
         return worker.id
@@ -117,9 +130,11 @@ async def test_legitimate_profile_gets_low_fraud_score():
 
         result = await fraud_detector.compute_fraud_score(db, worker, event, policy, trust_score=0.75)
 
-    assert result["adjusted_fraud_score"] < 0.2
+    assert result["adjusted_fraud_score"] < 0.3
     assert result["flags"] == []
     assert result["is_high_risk"] is False
+    assert "model_version" in result
+    assert "top_factors" in result
 
 
 @pytest.mark.asyncio
@@ -133,7 +148,7 @@ async def test_suspicious_profile_gets_flagged_and_scored_high():
 
         result = await fraud_detector.compute_fraud_score(db, worker, event, policy, trust_score=0.1)
 
-    assert result["adjusted_fraud_score"] >= 0.38
+    assert result["adjusted_fraud_score"] >= 0.25
     assert "movement" in result["flags"]
     assert "income_inflation" in result["flags"]
-    assert "pre_activity" in result["flags"]
+    assert "model_version" in result

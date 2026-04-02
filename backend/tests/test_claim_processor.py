@@ -7,9 +7,8 @@ import pytest
 from sqlalchemy import select
 
 from backend.core.claim_processor import claim_processor
-from backend.core.location_service import location_service
 from backend.database import async_session_factory
-from backend.db.models import AuditLog, Claim, Event, Policy, TrustScore, Worker
+from backend.db.models import AuditLog, Claim, Event, Policy, TrustScore, Worker, Zone
 from backend.utils.time import utc_now_naive
 
 
@@ -17,7 +16,9 @@ async def create_worker_policy_event(phone: str = "+919777666555"):
     now = utc_now_naive()
 
     async with async_session_factory() as db:
-        zone = await location_service.resolve_zone(db, "delhi", "south_delhi")
+        zone = (
+            await db.execute(select(Zone).where(Zone.slug == "south_delhi"))
+        ).scalar_one()
         worker = Worker(
             name="Processor Worker",
             phone=phone,

@@ -83,6 +83,13 @@ export default function IntelligenceOverview() {
   const [analytics, setAnalytics] = useState(null);
   const [config, setConfig] = useState(null);
   const [locations, setLocations] = useState(null);
+  const [models, setModels] = useState(null);
+  const forecastReadings = useMemo(() => analytics?.next_week_forecast || [], [analytics]);
+  const topForecast = useMemo(
+    () =>
+      [...forecastReadings].sort((a, b) => Number(b.projected_risk || 0) - Number(a.projected_risk || 0))[0] || null,
+    [forecastReadings],
+  );
 
   useEffect(() => {
     document.title = "System Intelligence | RideShield";
@@ -92,14 +99,16 @@ export default function IntelligenceOverview() {
     async function load() {
       setLoading(true);
       try {
-        const [analyticsRes, configRes, locationsRes] = await Promise.all([
+        const [analyticsRes, configRes, locationsRes, modelsRes] = await Promise.all([
           analyticsApi.adminOverview({ days: 14 }),
           healthApi.getConfig(),
           locationsApi.config(),
+          analyticsApi.models(),
         ]);
         setAnalytics(analyticsRes.data);
         setConfig(configRes.data);
         setLocations(locationsRes.data);
+        setModels(modelsRes.data.models);
       } finally {
         setLoading(false);
       }
@@ -116,20 +125,23 @@ export default function IntelligenceOverview() {
   const lossRatio = interpretLossRatio(analytics?.loss_ratio);
   const fraudMeaning = interpretFraudRate(analytics?.fraud_rate);
   const citiesMonitored = (locations?.cities || []).length;
-  const forecastReadings = analytics?.next_week_forecast || [];
-  const topForecast = useMemo(
-    () =>
-      [...forecastReadings].sort((a, b) => Number(b.projected_risk || 0) - Number(a.projected_risk || 0))[0] || null,
-    [forecastReadings],
-  );
+  const fraudModel = models?.fraud_model;
+  const riskModel = models?.risk_model;
 
   return (
     <div className="space-y-10">
+      {/* Asymmetric hero section */}
       <section className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="hero-glow hero-mesh rounded-[36px] p-8 sm:p-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/60">System intelligence</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl">
+        <div className="hero-glow hero-mesh rounded-[36px] p-8 sm:p-10 fade-in-up">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+            <BrainCircuit size={13} />
+            <span>Autonomous guardian</span>
+          </div>
+          <h1 className="mt-6 max-w-4xl text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
             The logic layer behind RideShield, exposed as a readable product surface.
+            <span className="hero-subtitle mt-2 block text-3xl font-bold sm:text-4xl">
+              Real-time. Explainable. Autonomous.
+            </span>
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-white/78 sm:text-lg">
             This page should not just show numbers. It should interpret what the engine is seeing, which city is moving
@@ -138,9 +150,12 @@ export default function IntelligenceOverview() {
         </div>
 
         <div className="space-y-4">
-          <div className="panel p-6">
+          {/* Scheduler state with pulse-glow */}
+          <div className="panel p-6 pulse-glow">
             <p className="eyebrow">Scheduler state</p>
-            <p className="mt-3 text-2xl font-bold text-primary">{scheduler?.enabled ? "Monitoring active" : "Monitoring disabled"}</p>
+            <p className="mt-3 text-2xl font-bold text-primary">
+              {scheduler?.enabled ? "Monitoring active" : "Monitoring disabled"}
+            </p>
             <p className="mt-3 text-sm leading-7 text-on-surface-variant">
               Interval {scheduler?.interval_seconds || "--"}s - last finished{" "}
               {scheduler?.last_finished_at ? formatDateTime(scheduler.last_finished_at) : "--"} - next scheduled{" "}
@@ -163,6 +178,7 @@ export default function IntelligenceOverview() {
         </div>
       </section>
 
+      {/* Intelligence blocks */}
       <section>
         <SectionHeader
           eyebrow="Intelligence blocks"
@@ -196,8 +212,8 @@ export default function IntelligenceOverview() {
               span: "col-span-12 lg:col-span-6",
             },
           ].map(({ icon: Icon, title, body, span }) => (
-            <div key={title} className={`${span} context-panel p-8`}>
-              <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-surface-container-low text-primary transition-smooth hover:scale-110">
+            <div key={title} className={`${span} group card-elevated context-panel p-8 transition-smooth hover:bg-surface-container`}>
+              <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-surface-container-low text-primary transition-smooth group-hover:scale-110 group-hover:bg-primary/10">
                 <Icon size={26} />
               </div>
               <h3 className="mt-6 text-xl font-bold leading-tight text-primary">{title}</h3>
@@ -207,6 +223,7 @@ export default function IntelligenceOverview() {
         </div>
       </section>
 
+      {/* Current readings */}
       <section>
         <SectionHeader
           eyebrow="Current readings"
@@ -234,6 +251,69 @@ export default function IntelligenceOverview() {
             <p className="mt-4 text-4xl font-bold text-primary">{citiesMonitored}</p>
             <p className="mt-3 text-sm leading-7 text-on-surface-variant">
               {(locations?.cities || []).map((city) => city.display_name).join(", ")}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-12 gap-4">
+          <div className="col-span-12 p-6 context-panel lg:col-span-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">Risk model</p>
+                <p className="mt-3 text-2xl font-bold text-primary">{riskModel?.version || "Unavailable"}</p>
+              </div>
+              <span className={`pill ${riskModel?.fallback_used ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`}>
+                {riskModel?.fallback_used ? "Fallback" : "Active"}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm">
+              <div>
+                <p className="text-on-surface-variant">R²</p>
+                <p className="mt-1 font-semibold text-primary">{riskModel?.r2_score != null ? Number(riskModel.r2_score).toFixed(3) : "--"}</p>
+              </div>
+              <div>
+                <p className="text-on-surface-variant">MAE</p>
+                <p className="mt-1 font-semibold text-primary">{riskModel?.mae != null ? Number(riskModel.mae).toFixed(3) : "--"}</p>
+              </div>
+              <div>
+                <p className="text-on-surface-variant">Samples</p>
+                <p className="mt-1 font-semibold text-primary">{riskModel?.n_samples || "--"}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-on-surface-variant">
+              This model adjusts weekly premium posture and zone-level disruption risk. It informs pricing and forecast posture rather than directly deciding payouts.
+            </p>
+          </div>
+          <div className="col-span-12 p-6 context-panel lg:col-span-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">Fraud model</p>
+                <p className="mt-3 text-2xl font-bold text-primary">{fraudModel?.version || "Unavailable"}</p>
+              </div>
+              <span className={`pill ${fraudModel?.fallback_used ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`}>
+                {fraudModel?.fallback_used ? "Rule fallback" : "Hybrid active"}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-4 text-sm">
+              <div>
+                <p className="text-on-surface-variant">ROC AUC</p>
+                <p className="mt-1 font-semibold text-primary">{fraudModel?.roc_auc != null ? Number(fraudModel.roc_auc).toFixed(3) : "--"}</p>
+              </div>
+              <div>
+                <p className="text-on-surface-variant">Precision</p>
+                <p className="mt-1 font-semibold text-primary">{fraudModel?.precision != null ? Number(fraudModel.precision).toFixed(3) : "--"}</p>
+              </div>
+              <div>
+                <p className="text-on-surface-variant">Recall</p>
+                <p className="mt-1 font-semibold text-primary">{fraudModel?.recall != null ? Number(fraudModel.recall).toFixed(3) : "--"}</p>
+              </div>
+              <div>
+                <p className="text-on-surface-variant">Samples</p>
+                <p className="mt-1 font-semibold text-primary">{fraudModel?.n_samples || "--"}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-on-surface-variant">
+              Fraud review uses a hybrid path: rules remain the guardrail, while the ML model adds probability and top-factor context for suspicious claims.
             </p>
           </div>
         </div>
@@ -277,7 +357,7 @@ export default function IntelligenceOverview() {
               <h3 className="text-lg font-bold text-primary">Interpretation notes</h3>
             </div>
             <div className="space-y-4 text-sm leading-7 text-on-surface-variant">
-              <p>Trigger evaluation is rule-based today and intentionally explainable.</p>
+              <p>Trigger evaluation remains threshold-based and intentionally explainable.</p>
               <p>Claims are incident-based, not trigger-stacked, so overlapping same-window events do not multiply payouts for one worker.</p>
               <p>Location awareness is DB-backed, which keeps monitoring, claim logic, and future analytics tied to the same geography source of truth.</p>
               <p>Extreme ratios on this page should be read as demo pressure signals unless the business model has been recalibrated against real premium volume.</p>

@@ -1,8 +1,9 @@
 """Worker and admin session endpoints."""
 
+import hmac
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +16,9 @@ from backend.db.models import Worker
 from backend.schemas.auth import AdminLoginRequest, WorkerLoginRequest
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+SESSION_COOKIE_NAME = "rideshield_session"
+SESSION_COOKIE_MAX_AGE = settings.SESSION_DURATION_HOURS * 3600
+SESSION_COOKIE_SECURE = not settings.DEBUG
 
 
 def worker_session_payload(worker: Worker) -> dict:
@@ -30,6 +34,7 @@ def worker_session_payload(worker: Worker) -> dict:
 async def worker_login(
     request: WorkerLoginRequest,
     http_request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     client_host = http_request.client.host if http_request.client else "unknown"
@@ -39,12 +44,7 @@ async def worker_login(
         window_seconds=settings.AUTH_RATE_LIMIT_WINDOW_SECONDS,
     )
     worker = (await db.execute(select(Worker).where(Worker.phone == request.phone))).scalar_one_or_none()
-    if not worker:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Worker not found for this phone number.",
-        )
-    if not verify_password(request.password, worker.password_hash):
+    if not worker or not verify_password(request.password, worker.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid worker credentials.",
@@ -56,6 +56,14 @@ async def worker_login(
         )
 
     token = create_session_token(worker_session_payload(worker))
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+    )
     return {
         "token": token,
         "session": {
@@ -69,14 +77,16 @@ async def worker_login(
 
 
 @router.post("/admin/login")
-async def admin_login(request: AdminLoginRequest, http_request: Request):
+async def admin_login(request: AdminLoginRequest, http_request: Request, response: Response):
     client_host = http_request.client.host if http_request.client else "unknown"
     await auth_rate_limiter.hit(
         f"admin:{client_host}:{request.username}",
         limit=settings.AUTH_RATE_LIMIT_ATTEMPTS,
         window_seconds=settings.AUTH_RATE_LIMIT_WINDOW_SECONDS,
     )
-    if request.username != settings.ADMIN_USERNAME or request.password != settings.ADMIN_PASSWORD:
+    username_ok = hmac.compare_digest(request.username.encode(), settings.ADMIN_USERNAME.encode())
+    password_ok = hmac.compare_digest(request.password.encode(), settings.ADMIN_PASSWORD.encode())
+    if not username_ok or not password_ok:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid admin credentials.",
@@ -89,6 +99,14 @@ async def admin_login(request: AdminLoginRequest, http_request: Request):
             "name": "RideShield Admin",
             "username": settings.ADMIN_USERNAME,
         }
+    )
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
     )
     return {
         "token": token,
@@ -110,5 +128,13 @@ async def get_current_auth_session(session: dict = Depends(get_current_session))
 
 
 @router.post("/logout")
-async def logout():
-    return {"message": "Client-side session cleared."}
+async def logout(response: Response):
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value="",
+        max_age=0,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+    )
+    return {"message": "Session cleared."}
