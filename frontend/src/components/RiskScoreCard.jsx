@@ -107,7 +107,7 @@ export default function RiskScoreCard({ workerId }) {
         </span>
       </div>
 
-      <div className="mt-5 rounded-[20px] bg-surface-container-low p-4">
+      <div className="mt-5 panel-quiet rounded-[24px] p-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">Why this matters now</p>
         <p className="mt-3 text-sm leading-6 text-on-surface">{explanation}</p>
       </div>

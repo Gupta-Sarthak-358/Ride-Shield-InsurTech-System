@@ -53,14 +53,14 @@ export default function DecisionPanel({ claim, narrative }) {
         {claim?.id ? <span className="pill bg-white text-on-surface-variant">Claim {claim.id.slice(0, 6)}</span> : null}
       </div>
 
-      <div className="mt-5 rounded-[22px] bg-white/75 p-4">
-        <p className="text-sm font-semibold text-primary">Why this matters now</p>
-        <p className="mt-3 text-sm leading-7 text-on-surface-variant">{reason}</p>
+      <div className="mt-5 panel-quiet rounded-[24px] p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">Why this matters now</p>
+        <p className="mt-3 text-sm leading-6 text-on-surface">{reason}</p>
       </div>
 
-      <div className="mt-5 rounded-[22px] border border-primary/10 bg-primary/5 p-4">
-        <p className="text-sm font-semibold text-primary">Protection narrative</p>
-        <p className="mt-3 text-sm leading-7 text-on-surface-variant">{narrative}</p>
+      <div className="mt-5 panel-quiet rounded-[24px] p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">Protection narrative</p>
+        <p className="mt-3 text-sm leading-6 text-on-surface">{narrative}</p>
       </div>
     </div>
   );
