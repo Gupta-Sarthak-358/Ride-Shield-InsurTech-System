@@ -14,7 +14,7 @@ export default function ScenarioCard({ scenario, running, result, thresholds, on
   const firedTriggers = zoneResult?.triggers_fired || [];
 
   return (
-    <div className="group panel overflow-hidden p-6 card-hover transition-smooth">
+    <div className="group panel h-full min-h-[252px] overflow-hidden p-6 card-hover transition-smooth">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Scenario</p>
@@ -26,33 +26,33 @@ export default function ScenarioCard({ scenario, running, result, thresholds, on
         </button>
       </div>
 
-      <p className="text-sm leading-6 text-ink/65">{scenario.summary}</p>
-      <p className="mt-3 text-sm font-medium text-ink/70">{scenario.outcome}</p>
+      <p className="text-sm leading-6 text-on-surface-variant">{scenario.summary}</p>
+      <p className="mt-3 text-sm font-medium text-on-surface-variant">{scenario.outcome}</p>
 
       {result ? (
         <div className="mt-5 space-y-4 rounded-[24px] bg-surface-container-low p-4">
           <div className="grid gap-3 lg:grid-cols-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Incidents</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Incidents</p>
               <p className="mt-2 text-xl font-bold text-primary">{result.events_created}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Claims</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Claims</p>
               <p className="mt-2 text-xl font-bold text-primary">{result.claims_generated}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Approved</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Approved</p>
               <p className="mt-2 text-xl font-bold text-primary">{result.claims_approved}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Payout</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Payout</p>
               <p className="mt-2 text-xl font-bold text-primary">{formatCurrency(result.total_payout || 0)}</p>
             </div>
           </div>
 
           <div className="rounded-[22px] bg-white/90 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Cause and effect</p>
-            <div className="mt-3 space-y-2 text-sm text-ink/70">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Cause and effect</p>
+            <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
               <p>
                 Scenario changes the simulator inputs for the selected zone. The trigger engine then checks real
                 thresholds and decides whether an incident should be created or extended.
@@ -74,17 +74,17 @@ export default function ScenarioCard({ scenario, running, result, thresholds, on
 
           <div className="grid gap-3 text-sm lg:grid-cols-3">
             <div className="rounded-[22px] bg-white/90 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Incident step</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Incident step</p>
               <p className="mt-2 font-semibold">
                 {result.events_created > 0 ? "Incident created" : result.events_extended > 0 ? "Incident extended" : "No incident change"}
               </p>
             </div>
             <div className="rounded-[22px] bg-white/90 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Worker impact</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Worker impact</p>
               <p className="mt-2 font-semibold">{result.claims_generated} claims processed</p>
             </div>
             <div className="rounded-[22px] bg-white/90 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink/45">Decision mix</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Decision mix</p>
               <p className="mt-2 font-semibold">
                 {result.claims_approved} approved | {result.claims_delayed} delayed | {result.claims_rejected} rejected
               </p>

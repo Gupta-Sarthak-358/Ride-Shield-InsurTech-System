@@ -23,14 +23,14 @@ export default function CausalityFlow({ steps = [] }) {
               <div className="group flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-lowest text-primary shadow-[0_10px_25px_rgba(26,28,25,0.12)] transition-smooth hover:shadow-[0_15px_35px_rgba(26,28,25,0.18)] hover:scale-110">
                 <Icon size={24} />
               </div>
-              <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.24em] text-ink/45">{label}</p>
+              <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">{label}</p>
               <p className="mt-2 text-sm font-semibold leading-tight text-primary">{text}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <p className="mt-8 text-sm leading-7 text-ink/65">
+      <p className="mt-8 text-sm leading-7 text-on-surface-variant">
         The scenario button does not create claims directly. It changes the environment, then the actual RideShield
         engine applies thresholds, merges incidents, scores claims, and decides payouts.
       </p>

@@ -13,7 +13,7 @@ function reasoningLine(status) {
 
 export default function ClaimList({ claims = [], onSelect, compact = false }) {
   if (!claims.length) {
-    return <p className="text-sm text-ink/55">No claims found for this view.</p>;
+    return <p className="text-sm text-on-surface-variant">No claims found for this view.</p>;
   }
 
   const incidents = groupClaimsByIncident(claims, { bucketMinutes: 90 });

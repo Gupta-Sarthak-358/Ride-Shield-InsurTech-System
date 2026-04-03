@@ -152,12 +152,12 @@ export default function DemoRunner() {
         <div>
           <p className="eyebrow">Demo runner</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-primary">Simulation Control Center</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-ink/65">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-on-surface-variant">
             Use real trigger APIs to force a visible RideShield cycle: signal threshold crossed, incident created, claims
             processed, and payouts completed.
           </p>
         </div>
-        <div className="hidden items-center gap-2 rounded-[18px] bg-surface-container-low px-4 py-3 text-xs font-bold uppercase tracking-[0.24em] text-ink/55 lg:flex">
+        <div className="hidden items-center gap-2 rounded-[18px] bg-surface-container-low px-4 py-3 text-xs font-bold uppercase tracking-[0.24em] text-on-surface-variant lg:flex">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           Engine live
         </div>
@@ -210,26 +210,18 @@ export default function DemoRunner() {
             ) : null}
 
             {/* Scenario grid — bento layout with varying spans */}
-            <div className="grid grid-cols-12 gap-5">
-              {SCENARIOS.map((scenario, idx) => {
-                const colSpanClass =
-                  idx === 0
-                    ? "col-span-12 lg:col-span-8"
-                    : idx === 1
-                      ? "col-span-12 md:col-span-6 lg:col-span-4"
-                      : "col-span-12 md:col-span-6";
-                return (
-                  <div key={scenario.id} className={colSpanClass}>
-                    <ScenarioCard
-                      scenario={scenario}
-                      running={runningScenario === scenario.id}
-                      result={results[scenario.id]}
-                      thresholds={status?.thresholds}
-                      onRun={handleRun}
-                    />
-                  </div>
-                );
-              })}
+            <div className="grid gap-5 md:grid-cols-2">
+              {SCENARIOS.map((scenario) => (
+                <div key={scenario.id} className="h-full">
+                  <ScenarioCard
+                    scenario={scenario}
+                    running={runningScenario === scenario.id}
+                    result={results[scenario.id]}
+                    thresholds={status?.thresholds}
+                    onRun={handleRun}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -281,26 +273,28 @@ export default function DemoRunner() {
           <div className="context-panel p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-[0.22em] text-primary">Live Activity Log</h3>
-              <span className="text-[11px] font-mono text-ink/45">Stream active</span>
+              <span className="text-[11px] font-mono text-on-surface-variant">Stream active</span>
             </div>
             <div className="max-h-72 space-y-3 overflow-y-auto text-sm">
               {activityLog.map((line, index) => (
                 <div
                   key={`${line}-${index}`}
-                  className={`flex gap-3 rounded-[18px] border-l-2 px-3 py-3 ${
+                  className={`flex gap-3 rounded-[18px] border px-3 py-3 ${
                     index === activityLog.length - 1
-                      ? "border-primary bg-white/60"
-                      : "border-transparent bg-surface-container-low"
+                      ? "border-primary/35 bg-primary/10 shadow-[inset_0_1px_0_rgba(105,248,233,0.08)]"
+                      : "border-outline-variant/35 bg-surface-container"
                   }`}
                 >
-                  <span className="shrink-0 font-mono text-[11px] text-ink/45">
+                  <span className="shrink-0 font-mono text-[11px] text-on-surface-variant">
                     {new Date(Date.now() - (activityLog.length - 1 - index) * 3000).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                       second: "2-digit",
                     })}
                   </span>
-                  <p className="font-mono leading-6 text-ink/70">{line}</p>
+                  <p className={`font-mono leading-6 ${index === activityLog.length - 1 ? "text-on-surface" : "text-on-surface-variant"}`}>
+                    {line}
+                  </p>
                 </div>
               ))}
             </div>
@@ -310,20 +304,20 @@ export default function DemoRunner() {
             <p className="eyebrow">Engine status</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="rounded-[22px] border border-primary/5 p-5 panel-quiet">
-                <p className="text-sm text-ink/45">Claims in window</p>
+                <p className="text-sm text-on-surface-variant">Claims in window</p>
                 <p className="mt-3 text-3xl font-bold text-primary">{claimStats?.total_claims ?? 0}</p>
-                <p className="mt-2 text-xs font-medium text-ink/55">
+                <p className="mt-2 text-xs font-medium text-on-surface-variant">
                   Approval rate {formatPercent(claimStats?.approval_rate)}
                 </p>
               </div>
               <div className="rounded-[22px] border border-primary/5 p-5 panel-quiet">
-                <p className="text-sm text-ink/45">Payout volume</p>
+                <p className="text-sm text-on-surface-variant">Payout volume</p>
                 <p className="mt-3 text-3xl font-bold text-primary">{formatCurrency(payoutStats?.total_amount)}</p>
-                <p className="mt-2 text-xs font-medium text-ink/55">{payoutStats?.total_payouts ?? 0} transfers</p>
+                <p className="mt-2 text-xs font-medium text-on-surface-variant">{payoutStats?.total_payouts ?? 0} transfers</p>
               </div>
             </div>
             <div className="mt-4 rounded-[22px] border border-primary/10 bg-gradient-to-br from-primary/5 to-primary/0 p-5">
-              <p className="text-sm text-ink/45">Scheduler cadence</p>
+              <p className="text-sm text-on-surface-variant">Scheduler cadence</p>
               <p className="mt-3 text-lg font-semibold text-primary">
                 {scheduler?.interval_seconds || "--"} second interval - next run{" "}
                 {scheduler?.next_scheduled_at ? formatDateTime(scheduler.next_scheduled_at) : "--"}
@@ -338,9 +332,11 @@ export default function DemoRunner() {
                 <div key={snapshot.zone} className="rounded-[22px] p-4 panel-quiet">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold text-primary">{humanizeSlug(snapshot.zone)}</p>
-                    <span className="pill bg-white text-ink/60">{snapshot.triggers_active.length} triggers</span>
+                    <span className={snapshot.triggers_active.length ? "pill-neutral" : "pill-subtle"}>
+                      {snapshot.triggers_active.length} triggers
+                    </span>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-ink/65">
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
                     {snapshot.triggers_active.length
                       ? snapshot.triggers_active.map(humanizeSlug).join(", ")
                       : "No active threshold breaches"}

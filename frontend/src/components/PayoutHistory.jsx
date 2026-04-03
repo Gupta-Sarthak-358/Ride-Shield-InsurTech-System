@@ -13,7 +13,7 @@ export default function PayoutHistory({ data }) {
           <h3 className="mt-2 text-2xl font-bold text-primary">Recent transfers</h3>
         </div>
         <div className="text-right">
-          <p className="text-sm text-ink/55">Total amount</p>
+          <p className="text-sm text-on-surface-variant">Total amount</p>
           <p className="text-xl font-bold text-primary">{formatCurrency(data.total_amount)}</p>
         </div>
       </div>
@@ -23,14 +23,14 @@ export default function PayoutHistory({ data }) {
           <div key={payout.id} className="panel-quiet flex items-center justify-between rounded-[24px] px-4 py-4">
             <div>
               <p className="font-semibold text-primary">{formatCurrency(payout.amount)}</p>
-              <p className="mt-1 text-sm text-ink/55">
+              <p className="mt-1 text-sm text-on-surface-variant">
                 {payout.channel} | {payout.transaction_id}
               </p>
             </div>
-            <p className="text-sm text-ink/55">{formatDateTime(payout.completed_at || payout.initiated_at)}</p>
+            <p className="text-sm text-on-surface-variant">{formatDateTime(payout.completed_at || payout.initiated_at)}</p>
           </div>
         ))}
-        {!data.payouts?.length ? <p className="text-sm text-ink/55">No payouts yet.</p> : null}
+        {!data.payouts?.length ? <p className="text-sm text-on-surface-variant">No payouts yet.</p> : null}
       </div>
     </div>
   );

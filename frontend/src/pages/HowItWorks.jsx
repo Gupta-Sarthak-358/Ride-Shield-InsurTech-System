@@ -94,7 +94,7 @@ export default function HowItWorks() {
             </p>
           </div>
           <div className="context-panel p-6">
-            <p className="text-sm text-ink/55">What makes it different</p>
+            <p className="text-sm text-on-surface-variant">What makes it different</p>
             <p className="mt-2 text-lg font-semibold text-primary">
               Zero manual filing, incident-first logic, fraud-aware decisions, and visible worker/admin reasoning.
             </p>
@@ -135,7 +135,7 @@ export default function HowItWorks() {
                   <Icon size={22} />
                 </div>
                 <h3 className="mt-5 text-xl font-bold text-primary">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-ink/65">{item.detail}</p>
+                <p className="mt-3 text-sm leading-7 text-on-surface-variant">{item.detail}</p>
               </div>
             );
           })}
@@ -157,7 +157,7 @@ export default function HowItWorks() {
                   <Icon size={22} />
                 </div>
                 <h3 className="mt-5 text-xl font-bold text-primary">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-ink/65">{text}</p>
+                <p className="mt-3 text-sm leading-7 text-on-surface-variant">{text}</p>
               </div>
             );
           })}

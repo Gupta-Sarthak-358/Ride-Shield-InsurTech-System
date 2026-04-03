@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -8,11 +9,14 @@ import { policiesApi } from "../api/policies";
 import { workersApi } from "../api/workers";
 import ErrorState from "../components/ErrorState";
 import PlanCard from "../components/PlanCard";
-import PremiumCalculator from "../components/PremiumCalculator";
 import RiskGauge from "../components/RiskGauge";
 import SectionHeader from "../components/SectionHeader";
 import { PLATFORM_OPTIONS, STORAGE_KEYS } from "../utils/constants";
-import { humanizeSlug } from "../utils/formatters";
+import {
+  formatCurrency,
+  humanizeSlug,
+  weeklyToDaily,
+} from "../utils/formatters";
 
 const initialForm = {
   name: "",
@@ -32,6 +36,74 @@ const steps = [
   { id: "plan", label: "Policy choice" },
   { id: "complete", label: "Ready" },
 ];
+
+const PLAN_STORIES = {
+  basic_protect: {
+    eyebrow: "Starter cover",
+    bestFor:
+      "A low-cost safety net for riders who mainly want outage protection and a predictable weekly premium.",
+    compareFit: "Low-cost safety net",
+  },
+  smart_protect: {
+    eyebrow: "Balanced cover",
+    bestFor:
+      "The default choice for most active riders who want weather, traffic, and outage protection together.",
+    compareFit: "Best for everyday riding",
+  },
+  assured_plan: {
+    eyebrow: "Guaranteed floor",
+    bestFor:
+      "Broader trigger cover with a guaranteed minimum payout floor when conditions turn rough.",
+    compareFit: "Broader payout certainty",
+  },
+  pro_max: {
+    eyebrow: "Premium cover",
+    bestFor:
+      "The highest-cap option for full-time riders who want predictive alerts and the fastest payout path.",
+    compareFit: "Maximum protection",
+  },
+};
+
+function getRecommendationReason(planName, cityLabel) {
+  switch (planName) {
+    case "basic_protect":
+      return `Good for riders in ${cityLabel} who want the cheapest weekly safety net.`;
+    case "smart_protect":
+      return `Best for most riders in ${cityLabel}.`;
+    case "assured_plan":
+      return `Strong fit for riders in ${cityLabel} who want broader coverage without jumping to the highest tier.`;
+    case "pro_max":
+      return `Best if this rider is on the road full-time in ${cityLabel} and wants the highest cap.`;
+    default:
+      return `Recommended for this rider in ${cityLabel}.`;
+  }
+}
+
+function getFeaturedPlans(plans, selectedPlan, recommendedPlan) {
+  const planMap = new Map((plans || []).map((plan) => [plan.plan_name, plan]));
+  const premiumChoice = ["assured_plan", "pro_max"].includes(selectedPlan)
+    ? selectedPlan
+    : ["assured_plan", "pro_max"].includes(recommendedPlan)
+      ? recommendedPlan
+      : planMap.has("pro_max")
+        ? "pro_max"
+        : planMap.has("assured_plan")
+          ? "assured_plan"
+          : null;
+
+  const orderedNames = [
+    "basic_protect",
+    "smart_protect",
+    premiumChoice,
+    selectedPlan,
+    recommendedPlan,
+  ];
+
+  return Array.from(new Set(orderedNames.filter(Boolean)))
+    .map((planName) => planMap.get(planName))
+    .filter(Boolean)
+    .slice(0, 3);
+}
 
 function validateRegistration(form) {
   const errors = {};
@@ -109,14 +181,51 @@ export default function Onboarding() {
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [locationsError, setLocationsError] = useState("");
   const [touched, setTouched] = useState({});
+  const [showAllPlans, setShowAllPlans] = useState(false);
 
+  const planOptions = useMemo(
+    () =>
+      planCatalog.length
+        ? planCatalog
+        : registration?.available_plans || [],
+    [planCatalog, registration?.available_plans],
+  );
+  const recommendedPlanName =
+    planOptions.find((plan) => plan.is_recommended)?.plan_name ||
+    registration?.recommended_plan ||
+    "";
   const selectedPlanData =
-    planCatalog.find((plan) => plan.plan_name === selectedPlan) ||
-    registration?.available_plans?.find((plan) => plan.plan_name === selectedPlan);
+    planOptions.find((plan) => plan.plan_name === selectedPlan) ||
+    registration?.available_plans?.find(
+      (plan) => plan.plan_name === selectedPlan,
+    );
+  const featuredPlans = useMemo(
+    () => getFeaturedPlans(planOptions, selectedPlan, recommendedPlanName),
+    [planOptions, recommendedPlanName, selectedPlan],
+  );
+  const additionalPlans = useMemo(
+    () =>
+      planOptions.filter(
+        (plan) =>
+          !featuredPlans.some(
+            (featuredPlan) => featuredPlan.plan_name === plan.plan_name,
+          ),
+      ),
+    [featuredPlans, planOptions],
+  );
   const stepIndex = steps.findIndex((item) => item.id === step);
   const progressWidth = `${((stepIndex + 1) / steps.length) * 100}%`;
   const validationErrors = useMemo(() => validateRegistration(form), [form]);
-  const passwordStrength = useMemo(() => getPasswordStrength(form.password), [form.password]);
+  const passwordStrength = useMemo(
+    () => getPasswordStrength(form.password),
+    [form.password],
+  );
+  const cityLabel = useMemo(() => humanizeSlug(form.city), [form.city]);
+  const selectedDailyCost = useMemo(
+    () => weeklyToDaily(selectedPlanData?.weekly_premium),
+    [selectedPlanData?.weekly_premium],
+  );
+  const monitoredCities = cityOptions.length || 4;
 
   useEffect(() => {
     document.title = "Onboarding | RideShield";
@@ -124,7 +233,9 @@ export default function Onboarding() {
 
   useEffect(() => {
     try {
-      const rawDraft = window.sessionStorage.getItem(STORAGE_KEYS.onboardingDraft);
+      const rawDraft = window.sessionStorage.getItem(
+        STORAGE_KEYS.onboardingDraft,
+      );
       if (rawDraft) {
         const draft = JSON.parse(rawDraft);
         if (draft.form) {
@@ -158,14 +269,16 @@ export default function Onboarding() {
       const cities = response.data || [];
       setCityOptions(cities);
       if (cities.length) {
-        setForm((current) => (
+        setForm((current) =>
           cities.some((city) => city.slug === current.city)
             ? current
-            : { ...current, city: cities[0].slug }
-        ));
+            : { ...current, city: cities[0].slug },
+        );
       }
     } catch {
-      setLocationsError("Worker geography could not be loaded. Retry to continue onboarding.");
+      setLocationsError(
+        "Worker geography could not be loaded. Retry to continue onboarding.",
+      );
     } finally {
       setLocationsLoading(false);
     }
@@ -178,11 +291,11 @@ export default function Onboarding() {
       const zones = response.data || [];
       setZoneOptions(zones);
       if (zones.length) {
-        setForm((current) => (
+        setForm((current) =>
           zones.some((zone) => zone.slug === current.zone)
             ? current
-            : { ...current, zone: zones[0].slug }
-        ));
+            : { ...current, zone: zones[0].slug },
+        );
       }
     } catch {
       setLocationsError("Zones could not be loaded for the selected city.");
@@ -223,6 +336,15 @@ export default function Onboarding() {
   }, [draftLoaded, form, planCatalog, registration, selectedPlan, step]);
 
   useEffect(() => {
+    if (
+      additionalPlans.some((plan) => plan.plan_name === selectedPlan) &&
+      !showAllPlans
+    ) {
+      setShowAllPlans(true);
+    }
+  }, [additionalPlans, selectedPlan, showAllPlans]);
+
+  useEffect(() => {
     let active = true;
 
     async function loadPlanCatalog() {
@@ -246,14 +368,19 @@ export default function Onboarding() {
             if (!current) {
               return recommended;
             }
-            return plans.some((plan) => plan.plan_name === current) ? current : recommended;
+            return plans.some((plan) => plan.plan_name === current)
+              ? current
+              : recommended;
           });
         }
       } catch (error) {
         if (!active) {
           return;
         }
-        setPlanCatalogError(error.response?.data?.detail || "Detailed premium pricing could not be loaded.");
+        setPlanCatalogError(
+          error.response?.data?.detail ||
+            "Detailed premium pricing could not be loaded.",
+        );
       } finally {
         if (active) {
           setPlanCatalogLoading(false);
@@ -282,7 +409,10 @@ export default function Onboarding() {
       const result = await loginWorker(form.phone, form.password);
       navigate(`/dashboard/${result.session.worker_id}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Worker sign-in failed. Use the sign-in page to continue.");
+      toast.error(
+        error.response?.data?.detail ||
+          "Worker sign-in failed. Use the sign-in page to continue.",
+      );
     } finally {
       setLoading(false);
     }
@@ -323,7 +453,9 @@ export default function Onboarding() {
       setStep("plan");
       toast.success("Worker registered. Choose a policy next.");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Worker registration failed.");
+      toast.error(
+        error.response?.data?.detail || "Worker registration failed.",
+      );
     } finally {
       setLoading(false);
     }
@@ -366,23 +498,37 @@ export default function Onboarding() {
         <div className="decision-panel p-8">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl bg-white/80 p-5">
-              <p className="text-sm text-ink/55">Worker</p>
+              <p className="text-sm text-on-surface-variant">Worker</p>
               <p className="mt-2 text-2xl font-bold">{registration.name}</p>
-              <p className="mt-2 text-sm text-ink/60">
-                {registration.city} - {registration.zone} - {registration.platform}
+              <p className="mt-2 text-sm text-on-surface-variant">
+                {registration.city} - {registration.zone} -{" "}
+                {registration.platform}
               </p>
             </div>
             <div className="rounded-3xl bg-white/80 p-5">
-              <p className="text-sm text-ink/55">Policy</p>
-              <p className="mt-2 text-2xl font-bold">{policyPurchase.policy.plan_display_name}</p>
-              <p className="mt-2 text-sm text-ink/60">{policyPurchase.message}</p>
+              <p className="text-sm text-on-surface-variant">Policy</p>
+              <p className="mt-2 text-2xl font-bold">
+                {policyPurchase.policy.plan_display_name}
+              </p>
+              <p className="mt-2 text-sm text-on-surface-variant">
+                {policyPurchase.message}
+              </p>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" className="button-primary" disabled={loading} onClick={handleOpenDashboard}>
+            <button
+              type="button"
+              className="button-primary"
+              disabled={loading}
+              onClick={handleOpenDashboard}
+            >
               {loading ? "Opening dashboard..." : "Open worker dashboard"}
             </button>
-            <button type="button" className="button-secondary" onClick={() => navigate("/auth")}>
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => navigate("/auth")}
+            >
               Sign in again later
             </button>
           </div>
@@ -392,7 +538,12 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div
+      className={clsx(
+        "mx-auto max-w-5xl space-y-8",
+        step === "plan" ? "pb-36" : "",
+      )}
+    >
       <SectionHeader
         eyebrow="Worker onboarding"
         title="Register a delivery worker and buy a policy"
@@ -403,7 +554,10 @@ export default function Onboarding() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-3">
             {steps.map((item, index) => (
-              <div key={item.id} className={`pill ${index <= stepIndex ? "bg-primary text-white" : "bg-surface-container-low text-on-surface-variant"}`}>
+              <div
+                key={item.id}
+                className={`pill ${index <= stepIndex ? "bg-primary text-white" : "bg-surface-container-low text-on-surface-variant"}`}
+              >
                 {item.label}
               </div>
             ))}
@@ -411,7 +565,10 @@ export default function Onboarding() {
           <p className="text-sm text-on-surface-variant">{summaryLine}</p>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-container-low">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: progressWidth }} />
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: progressWidth }}
+          />
         </div>
       </div>
 
@@ -419,12 +576,16 @@ export default function Onboarding() {
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <form className="context-panel p-6" onSubmit={handleRegister}>
             <div className="space-y-6">
-              {locationsError ? <ErrorState message={locationsError} onRetry={loadCities} /> : null}
+              {locationsError ? (
+                <ErrorState message={locationsError} onRetry={loadCities} />
+              ) : null}
               <div>
                 <p className="eyebrow">Identity</p>
                 <div className="mt-4 grid gap-5">
                   <div>
-                    <label className="label" htmlFor="worker-name">Full name</label>
+                    <label className="label" htmlFor="worker-name">
+                      Full name
+                    </label>
                     <input
                       id="worker-name"
                       className="field"
@@ -433,10 +594,16 @@ export default function Onboarding() {
                       onChange={(e) => updateField("name", e.target.value)}
                       required
                     />
-                    {touched.name && validationErrors.name ? <p className="mt-2 text-sm text-rose-700">{validationErrors.name}</p> : null}
+                    {touched.name && validationErrors.name ? (
+                      <p className="mt-2 text-sm text-rose-700">
+                        {validationErrors.name}
+                      </p>
+                    ) : null}
                   </div>
                   <div>
-                    <label className="label" htmlFor="worker-phone">Phone number</label>
+                    <label className="label" htmlFor="worker-phone">
+                      Phone number
+                    </label>
                     <input
                       id="worker-phone"
                       className="field"
@@ -445,38 +612,64 @@ export default function Onboarding() {
                       onChange={(e) => updateField("phone", e.target.value)}
                       required
                     />
-                    {touched.phone && validationErrors.phone ? <p className="mt-2 text-sm text-rose-700">{validationErrors.phone}</p> : null}
+                    {touched.phone && validationErrors.phone ? (
+                      <p className="mt-2 text-sm text-rose-700">
+                        {validationErrors.phone}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div>
-                      <label className="label" htmlFor="worker-password">Password</label>
+                      <label className="label" htmlFor="worker-password">
+                        Password
+                      </label>
                       <input
                         id="worker-password"
                         className="field"
                         type="password"
                         value={form.password}
                         onBlur={() => markTouched("password")}
-                        onChange={(e) => updateField("password", e.target.value)}
+                        onChange={(e) =>
+                          updateField("password", e.target.value)
+                        }
                         minLength={8}
                         required
                       />
-                      {passwordStrength ? <p className={`mt-2 text-sm ${passwordStrength.tone}`}>{passwordStrength.label}</p> : null}
-                      {touched.password && validationErrors.password ? <p className="mt-2 text-sm text-rose-700">{validationErrors.password}</p> : null}
+                      {passwordStrength ? (
+                        <p className={`mt-2 text-sm ${passwordStrength.tone}`}>
+                          {passwordStrength.label}
+                        </p>
+                      ) : null}
+                      {touched.password && validationErrors.password ? (
+                        <p className="mt-2 text-sm text-rose-700">
+                          {validationErrors.password}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
-                      <label className="label" htmlFor="worker-confirm-password">Confirm password</label>
+                      <label
+                        className="label"
+                        htmlFor="worker-confirm-password"
+                      >
+                        Confirm password
+                      </label>
                       <input
                         id="worker-confirm-password"
                         className="field"
                         type="password"
                         value={form.confirm_password}
                         onBlur={() => markTouched("confirm_password")}
-                        onChange={(e) => updateField("confirm_password", e.target.value)}
+                        onChange={(e) =>
+                          updateField("confirm_password", e.target.value)
+                        }
                         minLength={8}
                         required
                       />
-                      {touched.confirm_password && validationErrors.confirm_password ? (
-                        <p className="mt-2 text-sm text-rose-700">{validationErrors.confirm_password}</p>
+                      {touched.confirm_password &&
+                      validationErrors.confirm_password ? (
+                        <p className="mt-2 text-sm text-rose-700">
+                          {validationErrors.confirm_password}
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -487,7 +680,9 @@ export default function Onboarding() {
                 <p className="eyebrow">Operating area</p>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="worker-city">City</label>
+                    <label className="label" htmlFor="worker-city">
+                      City
+                    </label>
                     <select
                       id="worker-city"
                       className="field"
@@ -503,7 +698,9 @@ export default function Onboarding() {
                     </select>
                   </div>
                   <div>
-                    <label className="label" htmlFor="worker-zone">Zone</label>
+                    <label className="label" htmlFor="worker-zone">
+                      Zone
+                    </label>
                     <select
                       id="worker-zone"
                       className="field"
@@ -518,7 +715,11 @@ export default function Onboarding() {
                         </option>
                       ))}
                     </select>
-                    {touched.zone && validationErrors.zone ? <p className="mt-2 text-sm text-rose-700">{validationErrors.zone}</p> : null}
+                    {touched.zone && validationErrors.zone ? (
+                      <p className="mt-2 text-sm text-rose-700">
+                        {validationErrors.zone}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -527,8 +728,15 @@ export default function Onboarding() {
                 <p className="eyebrow">Earning profile</p>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="label" htmlFor="worker-platform">Platform</label>
-                    <select id="worker-platform" className="field" value={form.platform} onChange={(e) => updateField("platform", e.target.value)}>
+                    <label className="label" htmlFor="worker-platform">
+                      Platform
+                    </label>
+                    <select
+                      id="worker-platform"
+                      className="field"
+                      value={form.platform}
+                      onChange={(e) => updateField("platform", e.target.value)}
+                    >
                       {PLATFORM_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -537,70 +745,362 @@ export default function Onboarding() {
                     </select>
                   </div>
                   <div>
-                    <label className="label" htmlFor="worker-hours">Working hours per day</label>
-                    <input id="worker-hours" className="field" type="number" step="0.5" value={form.working_hours} onChange={(e) => updateField("working_hours", e.target.value)} />
+                    <label className="label" htmlFor="worker-hours">
+                      Working hours per day
+                    </label>
+                    <input
+                      id="worker-hours"
+                      className="field"
+                      type="number"
+                      step="0.5"
+                      value={form.working_hours}
+                      onChange={(e) =>
+                        updateField("working_hours", e.target.value)
+                      }
+                    />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="label" htmlFor="worker-income">Self-reported daily income</label>
-                    <input id="worker-income" className="field" type="number" value={form.self_reported_income} onChange={(e) => updateField("self_reported_income", e.target.value)} />
+                    <label className="label" htmlFor="worker-income">
+                      Self-reported daily income
+                    </label>
+                    <input
+                      id="worker-income"
+                      className="field"
+                      type="number"
+                      value={form.self_reported_income}
+                      onChange={(e) =>
+                        updateField("self_reported_income", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
               </div>
 
-              <label className="flex items-start gap-3 rounded-2xl bg-black/[0.03] p-4 text-sm text-ink/70">
+              <label className="flex items-start gap-3 rounded-2xl bg-surface-container-high p-4 text-sm text-on-surface-variant">
                 <input
                   className="mt-1"
                   type="checkbox"
                   checked={form.consent_given}
                   onBlur={() => markTouched("consent_given")}
-                  onChange={(e) => updateField("consent_given", e.target.checked)}
+                  onChange={(e) =>
+                    updateField("consent_given", e.target.checked)
+                  }
                 />
-                <span>Worker consents to location, behavior, and device data being used for claim validation and fraud checks.</span>
+                <span>
+                  Worker consents to location, behavior, and device data being
+                  used for claim validation and fraud checks.
+                </span>
               </label>
               {touched.consent_given && validationErrors.consent_given ? (
-                <p className="text-sm text-rose-700">{validationErrors.consent_given}</p>
+                <p className="text-sm text-rose-700">
+                  {validationErrors.consent_given}
+                </p>
               ) : null}
 
-              <button type="submit" className="button-primary" disabled={loading || locationsLoading || !form.consent_given || !form.zone}>
+              <button
+                type="submit"
+                className="button-primary"
+                disabled={
+                  loading ||
+                  locationsLoading ||
+                  !form.consent_given ||
+                  !form.zone
+                }
+              >
                 {loading ? "Calculating risk profile..." : "Register worker"}
               </button>
             </div>
           </form>
 
-          <RiskGauge score={registration?.risk_score} breakdown={registration?.risk_breakdown} />
+          <RiskGauge
+            score={registration?.risk_score}
+            breakdown={registration?.risk_breakdown}
+          />
         </div>
       ) : null}
 
       {step === "plan" && registration ? (
         <div className="space-y-6">
-          <RiskGauge score={registration.risk_score} breakdown={registration.risk_breakdown} />
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="grid gap-4">
-              {(planCatalog.length ? planCatalog : registration.available_plans).map((plan) => (
-                <PlanCard key={plan.plan_name} plan={plan} selected={selectedPlan === plan.plan_name} onSelect={setSelectedPlan} />
-              ))}
-            </div>
-            <div className="space-y-4">
+          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+            <RiskGauge
+              score={registration.risk_score}
+              breakdown={registration.risk_breakdown}
+            />
+
+            <div className="panel p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Compare plans</p>
+                  <h3 className="mt-2 text-2xl font-bold text-primary">
+                    Pick protection in one glance
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant">
+                    Three curated options. Weekly pricing already reflects the
+                    rider&apos;s live risk score, so you only need to compare
+                    cost, cap, and fit.
+                  </p>
+                </div>
+                <span className="pill bg-surface-container-high text-on-surface-variant">
+                  {featuredPlans.length} options
+                </span>
+              </div>
+
               {planCatalogError ? (
-                <ErrorState
-                  message={planCatalogError}
-                  onRetry={() => setPlanCatalogReloadKey((current) => current + 1)}
-                />
+                <div className="mt-5">
+                  <ErrorState
+                    message={planCatalogError}
+                    onRetry={() =>
+                      setPlanCatalogReloadKey((current) => current + 1)
+                    }
+                  />
+                </div>
               ) : null}
+
               {planCatalogLoading ? (
-                <div className="panel p-6 text-sm text-ink/60">Loading detailed premium pricing...</div>
+                <div className="mt-5 rounded-2xl bg-surface-container-high p-4 text-sm text-on-surface-variant">
+                  Refreshing live policy pricing...
+                </div>
               ) : null}
-              <PremiumCalculator selectedPlan={selectedPlanData} />
+
+              {featuredPlans.length ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {featuredPlans.map((plan) => {
+                    const story = PLAN_STORIES[plan.plan_name];
+                    const planName =
+                      plan.display_name || humanizeSlug(plan.plan_name);
+
+                    return (
+                      <div
+                        key={plan.plan_name}
+                        className={clsx(
+                          "rounded-2xl border p-4 transition",
+                          selectedPlan === plan.plan_name
+                            ? "border-ink bg-white"
+                            : "border-white/10 bg-surface-container-high",
+                        )}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                          {planName}
+                        </p>
+                        <p className="mt-3 text-2xl font-bold">
+                          {formatCurrency(plan.weekly_premium)}
+                        </p>
+                        <p className="mt-1 text-sm text-on-surface-variant">
+                          Up to {formatCurrency(plan.coverage_cap)}
+                        </p>
+                        <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                          {story?.compareFit || plan.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl bg-surface-container-high p-4 text-sm text-on-surface-variant">
+                  Policy options will appear as soon as pricing finishes
+                  loading.
+                </div>
+              )}
             </div>
           </div>
-          <div className="context-panel flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-ink/65">
-              Coverage stays pending until the waiting period ends or an admin activates it in simulation mode. This keeps
-              worker and admin responsibilities separate.
-            </p>
-            <button type="button" className="button-primary" disabled={loading} onClick={handlePurchase}>
-              {loading ? "Purchasing..." : "Purchase selected plan"}
-            </button>
+
+          <div className="grid gap-4 xl:grid-cols-3">
+            {featuredPlans.map((plan) => (
+              <PlanCard
+                key={plan.plan_name}
+                plan={plan}
+                selected={selectedPlan === plan.plan_name}
+                onSelect={setSelectedPlan}
+                story={PLAN_STORIES[plan.plan_name]}
+                recommendationReason={
+                  plan.is_recommended
+                    ? getRecommendationReason(plan.plan_name, cityLabel)
+                    : ""
+                }
+              />
+            ))}
+          </div>
+
+          {additionalPlans.length ? (
+            <div className="context-panel p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">More options</p>
+                  <h3 className="mt-2 text-2xl font-bold text-primary">
+                    Need a different coverage shape?
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant">
+                    The short list keeps the decision fast, but the full backend
+                    catalog is still available when a rider wants a different
+                    cap or payout profile.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => setShowAllPlans((current) => !current)}
+                >
+                  {showAllPlans
+                    ? `Hide extra option${additionalPlans.length === 1 ? "" : "s"}`
+                    : `Show ${additionalPlans.length} more option${additionalPlans.length === 1 ? "" : "s"}`}
+                </button>
+              </div>
+
+              {showAllPlans ? (
+                <div className="mt-5 grid gap-4 xl:grid-cols-3">
+                  {additionalPlans.map((plan) => (
+                    <PlanCard
+                      key={plan.plan_name}
+                      plan={plan}
+                      selected={selectedPlan === plan.plan_name}
+                      onSelect={setSelectedPlan}
+                      story={PLAN_STORIES[plan.plan_name]}
+                      recommendationReason={
+                        plan.is_recommended
+                          ? getRecommendationReason(plan.plan_name, cityLabel)
+                          : ""
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl bg-surface-container-high p-4 text-sm leading-6 text-on-surface-variant">
+                  RideShield is highlighting the quickest three-way choice
+                  first. Open the extra option list if this rider needs a
+                  different premium-to-coverage tradeoff.
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="panel p-6">
+              <p className="eyebrow">Trust and safety</p>
+              <h3 className="mt-2 text-2xl font-bold text-primary">
+                Why this feels safer to buy
+              </h3>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-surface-container-high p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    Monitoring
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {monitoredCities} cities live
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    Weather, traffic, AQI, and outage thresholds are tracked
+                    automatically.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-high p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    Decision path
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">
+                    Auto-checks first
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    Straightforward claims can auto-decide; suspicious ones
+                    route to manual review.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-high p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    Activation
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">
+                    Clear waiting period
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    Coverage stays pending until the waiting period ends or
+                    simulation activates it.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel p-6">
+              <p className="eyebrow">After purchase</p>
+              <h3 className="mt-2 text-2xl font-bold text-primary">
+                What happens next
+              </h3>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl bg-surface-container-high p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    Step 1
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">Purchase</p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    Lock in the selected weekly premium and coverage cap.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-high p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    Step 2
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">Waiting period</p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    The policy stays pending until the wait window ends or an
+                    admin activates simulation coverage.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-surface-container-high p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                    Step 3
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">Coverage active</p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    The worker dashboard shows the active policy, live
+                    incidents, and claim outcomes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {step === "plan" && registration ? (
+        <div className="fixed inset-x-4 bottom-4 z-30 mx-auto max-w-5xl">
+          <div className="panel border-ink/10 bg-white/95 p-4 shadow-2xl backdrop-blur">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">
+                  Selected plan
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-3">
+                  <p className="text-xl font-bold text-primary">
+                    {selectedPlanData
+                      ? selectedPlanData.display_name ||
+                        humanizeSlug(selectedPlanData.plan_name)
+                      : "Choose a plan"}
+                  </p>
+                  {selectedPlanData ? (
+                    <span className="pill bg-primary text-white">
+                      {formatCurrency(selectedPlanData.weekly_premium)} / week
+                    </span>
+                  ) : null}
+                  {selectedDailyCost ? (
+                    <span className="text-sm text-on-surface-variant">
+                      About {formatCurrency(selectedDailyCost)} a day
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  Coverage starts after the waiting period or an admin activates
+                  it in simulation mode.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="button-primary min-w-[240px] px-8 py-4 text-base"
+                disabled={loading || !selectedPlanData}
+                onClick={handlePurchase}
+              >
+                {loading ? "Purchasing..." : "Purchase selected plan"}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

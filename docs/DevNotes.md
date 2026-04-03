@@ -4,6 +4,31 @@ This file is the implementation baseline for the current repo, not a copy of the
 
 ### Latest Repo Notes
 
+- Latest push snapshot date: `2026-04-03`
+- Final verification for the current worktree:
+  - backend tests: `56 passed`
+  - frontend tests: `63 passed`
+  - frontend build: successful
+  - frontend lint: successful
+- Current session/auth state:
+  - auth cookies are now root-scoped so worker/admin sessions survive redirects into protected routes
+  - localhost frontend also supports bearer fallback during session restore/login flows when a cookie is unavailable
+- Current claim dedupe rule:
+  - one worker should not receive multiple claims in the same incident hour window even if demo runs force fresh events
+- Current frontend state:
+  - onboarding is now decision-first and comparison-led instead of exposing raw pricing/risk internals by default
+  - admin, demo runner, and intelligence surfaces were restyled into the darker operational shell now present in the repo
+  - recent contrast fixes were applied to review queue empty states, live logs, forecast/status chips, and snapshot trigger pills
+- Intentional tracked removal in this snapshot:
+  - `frontend/src/components/PremiumCalculator.jsx`
+  - this was replaced by the simplified onboarding plan-selection flow instead of left as a duplicate pricing surface
+- New docs added in the repo:
+  - `docs/business_model.md`
+  - `docs/realtime_api_migration_plan.md`
+- Git hygiene reminder:
+  - runtime logs remain local-only and ignored
+  - this pass is not dropping any tracked file other than the intentional `PremiumCalculator.jsx` removal above
+
 - Risk-model scaffolding and runtime risk-model service now exist.
 - Forecast engine and analytics model-status endpoints now exist.
 - Frontend includes model/risk/forecast visibility surfaces.

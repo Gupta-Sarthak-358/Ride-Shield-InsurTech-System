@@ -110,7 +110,7 @@ export default function Home() {
             <p className="mt-3 text-2xl font-bold leading-tight text-primary">
               Workers are informed. The system does the filing, scoring, and payout orchestration.
             </p>
-            <p className="mt-4 text-sm leading-7 text-ink/65">
+            <p className="mt-4 text-sm leading-7 text-on-surface-variant">
               RideShield is designed to observe disruption signals, translate them into one clear incident, and expose
               that reasoning across worker, admin, and demo views.
             </p>
@@ -118,13 +118,13 @@ export default function Home() {
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
             <div className="context-panel p-6 card-hover transition-smooth">
-              <p className="text-sm text-ink/55">Worker surface</p>
+              <p className="text-sm text-on-surface-variant">Worker surface</p>
               <p className="mt-2 text-lg font-semibold text-primary">
                 Coverage, incidents, payout history, and decision explanations in one calm, readable view.
               </p>
             </div>
             <div className="context-panel p-6 card-hover transition-smooth">
-              <p className="text-sm text-ink/55">Admin surface</p>
+              <p className="text-sm text-on-surface-variant">Admin surface</p>
               <p className="mt-2 text-lg font-semibold text-primary">
                 Review queue, disruption pressure, fraud visibility, scheduler health, and city-aware monitoring.
               </p>

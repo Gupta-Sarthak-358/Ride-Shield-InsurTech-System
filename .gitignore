@@ -26,6 +26,7 @@ ENV/
 .idea/
 *.swp
 *.swo
+logs/
 
 # OS / local noise
 .DS_Store
@@ -53,6 +54,7 @@ CODE_AUDIT_REPORT.md
 FRONTEND_IMPROVEMENT_PLAN.md
 test_model.py
 test_phase2_ml_integration.py
+realtime_api_migration_plan.md
 nul
 other/
 DEVTrails_2026_Usecase_Document (1).pdf

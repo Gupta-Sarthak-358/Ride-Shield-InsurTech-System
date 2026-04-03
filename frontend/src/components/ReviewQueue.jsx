@@ -12,7 +12,7 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
       <div className="mb-5">
         <p className="eyebrow">Admin workflow</p>
         <h3 className="mt-2 text-2xl font-bold text-primary">Manual review queue</h3>
-        <p className="mt-2 text-sm leading-6 text-ink/60">
+        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
           Delayed claims are grouped by incident so the reviewer sees one disruption narrative with the underlying claim
           actions still exposed.
         </p>
@@ -28,10 +28,10 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                     <span className={statusPill(incident.status)}>{humanizeSlug(incident.status)}</span>
                     <p className="text-sm font-semibold text-primary">{incident.worker_name}</p>
                   </div>
-                  <p className="mt-2 text-sm text-ink/60">
+                  <p className="mt-2 text-sm text-on-surface-variant">
                     {incident.trigger_types.map(humanizeSlug).join(", ")} - {humanizeSlug(incident.zone)}
                   </p>
-                  <p className="mt-1 text-xs text-ink/45">
+                  <p className="mt-1 text-xs text-on-surface-variant">
                     {incident.claim_count > 1
                       ? `${incident.claim_count} linked claims in one disruption incident`
                       : "Single delayed claim"}
@@ -40,27 +40,27 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
 
                 <div className="text-right text-sm">
                   <p className="font-semibold text-primary">{formatCurrency(incident.total_calculated_payout)}</p>
-                  <p className="mt-1 text-ink/45">{formatRelative(incident.review_deadline)}</p>
+                  <p className="mt-1 text-on-surface-variant">{formatRelative(incident.review_deadline)}</p>
                 </div>
               </div>
 
               <div className="mb-4 grid gap-3 text-sm sm:grid-cols-3">
                 <div>
-                  <p className="text-ink/45">Fraud score</p>
+                  <p className="text-on-surface-variant">Fraud score</p>
                   <p className="mt-2 font-semibold text-primary">{formatScore(incident.max_fraud_score)}</p>
                 </div>
                 <div>
-                  <p className="text-ink/45">Final score</p>
+                  <p className="text-on-surface-variant">Final score</p>
                   <p className="mt-2 font-semibold text-primary">{formatScore(incident.avg_final_score)}</p>
                 </div>
                 <div>
-                  <p className="text-ink/45">Overdue</p>
+                  <p className="text-on-surface-variant">Overdue</p>
                   <p className="mt-2 font-semibold text-primary">{incident.overdue_count ? "Yes" : "No"}</p>
                 </div>
               </div>
 
-              <div className="mb-4 rounded-[18px] border border-primary/8 bg-white/65 p-3">
-                <div className="flex flex-wrap items-center gap-3 text-xs text-ink/55">
+              <div className="mb-4 rounded-[18px] border border-primary/8 bg-surface-container-high/75 p-3">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant">
                   <span className="font-semibold text-primary">
                     {incident.fraud_model_version || "rule-based"} {incident.fraud_fallback_used ? "- fallback" : "- hybrid active"}
                   </span>
@@ -73,12 +73,12 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                 <div className="mt-3 flex flex-wrap gap-2">
                   {incident.top_factors?.length ? (
                     incident.top_factors.map((factor) => (
-                      <span key={factor.factor} className="pill bg-white text-ink/65">
+                      <span key={factor.factor} className="pill-neutral">
                         {factor.label}
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-ink/45">No ML fraud factors available for this incident.</span>
+                    <span className="text-xs text-on-surface-variant">No ML fraud factors available for this incident.</span>
                   )}
                 </div>
               </div>
@@ -86,7 +86,7 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   {incident.claims.map((claim) => (
-                    <span key={claim.id} className="pill bg-white text-ink/65">
+                    <span key={claim.id} className="pill-neutral">
                       {humanizeSlug(claim.trigger_type)} - {claim.id.slice(0, 6)}
                     </span>
                   ))}
@@ -120,9 +120,9 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
             </div>
           ))
         ) : (
-          <div className="rounded-[24px] border border-primary/10 bg-white/75 p-5">
+          <div className="rounded-[24px] border border-primary/12 bg-surface-container-high/75 p-5 shadow-[inset_0_1px_0_rgba(105,248,233,0.05)]">
             <p className="text-sm font-semibold text-primary">No delayed claims waiting for review.</p>
-            <p className="mt-2 text-sm leading-6 text-ink/55">
+            <p className="mt-2 text-sm leading-6 text-on-surface">
               The current filters do not surface any blocked incidents. The next decision panel should stay quiet until
               a reviewable claim appears.
             </p>

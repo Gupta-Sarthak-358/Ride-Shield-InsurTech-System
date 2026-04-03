@@ -119,7 +119,7 @@ async def get_event_detail(event_id: UUID, db: AsyncSession = Depends(get_db)):
         "approved_claims": sum(1 for claim in event.claims if claim.status == "approved"),
         "delayed_claims": sum(1 for claim in event.claims if claim.status == "delayed"),
         "rejected_claims": sum(1 for claim in event.claims if claim.status == "rejected"),
-        "total_payout": round(sum(claim.get("final_payout", 0) or 0 for claim in claims_data), 2),
+        "total_payout": round(sum(float(claim.final_payout or 0) for claim in event.claims if claim.status == "approved"), 2),
     }
 
 

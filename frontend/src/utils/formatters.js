@@ -8,6 +8,14 @@ export function formatCurrency(value) {
   return `INR ${Math.round(Number(value)).toLocaleString("en-IN")}`;
 }
 
+export function weeklyToDaily(value) {
+  const numeric = Number(value || 0);
+  if (Number.isNaN(numeric) || numeric <= 0) {
+    return 0;
+  }
+  return Math.max(1, Math.round(numeric / 7));
+}
+
 export function formatPercent(value, digits = 1) {
   if (value === null || value === undefined) {
     return "0%";
@@ -57,28 +65,29 @@ export function humanizeSlug(value = "") {
 }
 
 export function statusPill(status) {
+  // Dark-adapted status pill classes (Aegis Nocturne)
   const styles = {
-    approved: "bg-emerald-100 text-emerald-800",
-    delayed: "bg-amber-100 text-amber-800",
-    rejected: "bg-rose-100 text-rose-800",
-    active: "bg-sky-100 text-sky-800",
-    pending: "bg-slate-100 text-slate-800",
-    completed: "bg-emerald-100 text-emerald-800",
+    approved:  "badge-active",
+    completed: "badge-active",
+    active:    "badge-active",
+    delayed:   "badge-pending",
+    pending:   "badge-pending",
+    rejected:  "badge-error",
   };
 
-  return clsx("pill", styles[status] || "bg-slate-100 text-slate-800");
+  return clsx("pill", styles[status] || "bg-surface-container-high text-on-surface-variant");
 }
 
 export function riskLabel(score) {
   const numeric = Number(score || 0);
   if (numeric < 0.25) {
-    return { label: "Stable", tone: "text-emerald-700" };
+    return { label: "Stable",   tone: "text-primary" };
   }
   if (numeric < 0.5) {
-    return { label: "Guarded", tone: "text-gold" };
+    return { label: "Guarded",  tone: "text-on-tertiary-container" };
   }
   if (numeric < 0.75) {
-    return { label: "Elevated", tone: "text-orange-700" };
+    return { label: "Elevated", tone: "text-secondary" };
   }
-  return { label: "Critical", tone: "text-rose-700" };
+  return { label: "Critical",   tone: "text-error" };
 }

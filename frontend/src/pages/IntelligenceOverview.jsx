@@ -19,20 +19,20 @@ function interpretLossRatio(value) {
   const ratio = Number(value);
   if (ratio >= 150) {
     return {
-      tone: "bg-red-100 text-red-900",
+      tone: "badge-error",
       label: "Pressure",
       message: "Claims are outpacing current premium volume. Treat this as a pricing or simulation stress signal.",
     };
   }
   if (ratio >= 100) {
     return {
-      tone: "bg-amber-100 text-amber-900",
+      tone: "badge-pending",
       label: "Watch",
       message: "Claims and payouts are close to or above sustainable weekly pricing. Review premium calibration.",
     };
   }
   return {
-    tone: "bg-emerald-100 text-emerald-900",
+    tone: "badge-active",
     label: "Stable",
     message: "Current payouts sit within the protection envelope implied by recent premium volume.",
   };
@@ -53,26 +53,26 @@ function bandTone(band) {
   switch (band) {
     case "critical":
       return {
-        container: "border-l-red-600 bg-red-50/40",
-        pill: "bg-red-100 text-red-900",
+        container: "border-l-red-600 bg-surface-container-high/40",
+        pill: "badge-error",
         progress: "bg-red-600",
       };
     case "elevated":
       return {
-        container: "border-l-amber-600 bg-amber-50/40",
-        pill: "bg-amber-100 text-amber-900",
+        container: "border-l-amber-600 bg-surface-container-high/40",
+        pill: "badge-pending",
         progress: "bg-amber-600",
       };
     case "guarded":
       return {
-        container: "border-l-blue-600 bg-blue-50/40",
-        pill: "bg-blue-100 text-blue-900",
+        container: "border-l-blue-600 bg-surface-container-high/40",
+        pill: "badge-guarded",
         progress: "bg-blue-600",
       };
     default:
       return {
-        container: "border-l-emerald-600 bg-emerald-50/40",
-        pill: "bg-emerald-100 text-emerald-900",
+        container: "border-l-emerald-600 bg-surface-container-high/40",
+        pill: "badge-active",
         progress: "bg-emerald-600",
       };
   }
@@ -118,7 +118,7 @@ export default function IntelligenceOverview() {
   }, []);
 
   if (loading) {
-    return <div className="panel p-8 text-center text-ink/60">Loading intelligence overview...</div>;
+    return <div className="panel p-8 text-center text-on-surface-variant">Loading intelligence overview...</div>;
   }
 
   const scheduler = config?.scheduler;
@@ -262,7 +262,7 @@ export default function IntelligenceOverview() {
                 <p className="eyebrow">Risk model</p>
                 <p className="mt-3 text-2xl font-bold text-primary">{riskModel?.version || "Unavailable"}</p>
               </div>
-              <span className={`pill ${riskModel?.fallback_used ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`}>
+              <span className={`pill ${riskModel?.fallback_used ? "badge-pending" : "badge-active"}`}>
                 {riskModel?.fallback_used ? "Fallback" : "Active"}
               </span>
             </div>
@@ -290,7 +290,7 @@ export default function IntelligenceOverview() {
                 <p className="eyebrow">Fraud model</p>
                 <p className="mt-3 text-2xl font-bold text-primary">{fraudModel?.version || "Unavailable"}</p>
               </div>
-              <span className={`pill ${fraudModel?.fallback_used ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`}>
+              <span className={`pill ${fraudModel?.fallback_used ? "badge-pending" : "badge-active"}`}>
                 {fraudModel?.fallback_used ? "Rule fallback" : "Hybrid active"}
               </span>
             </div>

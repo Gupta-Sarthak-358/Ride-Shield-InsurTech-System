@@ -75,37 +75,37 @@ describe("humanizeSlug", () => {
 
 describe("statusPill", () => {
   it("returns approved pill style", () => {
-    expect(statusPill("approved")).toContain("emerald");
+    expect(statusPill("approved")).toContain("badge-active");
   });
 
   it("returns delayed pill style", () => {
-    expect(statusPill("delayed")).toContain("amber");
+    expect(statusPill("delayed")).toContain("badge-pending");
   });
 
   it("returns rejected pill style", () => {
-    expect(statusPill("rejected")).toContain("rose");
+    expect(statusPill("rejected")).toContain("badge-error");
   });
 
   it("returns default for unknown status", () => {
-    expect(statusPill("unknown")).toContain("slate");
+    expect(statusPill("unknown")).toContain("surface-container-high");
   });
 });
 
 describe("riskLabel", () => {
   it("returns Stable for score < 0.25", () => {
-    expect(riskLabel(0.1)).toEqual({ label: "Stable", tone: "text-emerald-700" });
+    expect(riskLabel(0.1)).toEqual({ label: "Stable", tone: "text-primary" });
   });
 
   it("returns Guarded for score between 0.25 and 0.5", () => {
-    expect(riskLabel(0.35)).toEqual({ label: "Guarded", tone: "text-gold" });
+    expect(riskLabel(0.35)).toEqual({ label: "Guarded", tone: "text-on-tertiary-container" });
   });
 
   it("returns Elevated for score between 0.5 and 0.75", () => {
-    expect(riskLabel(0.6)).toEqual({ label: "Elevated", tone: "text-orange-700" });
+    expect(riskLabel(0.6)).toEqual({ label: "Elevated", tone: "text-secondary" });
   });
 
   it("returns Critical for score >= 0.75", () => {
-    expect(riskLabel(0.8)).toEqual({ label: "Critical", tone: "text-rose-700" });
+    expect(riskLabel(0.8)).toEqual({ label: "Critical", tone: "text-error" });
   });
 
   it("handles null as Stable", () => {

@@ -10,21 +10,21 @@
 export function getDisruptionTone(level) {
   if (level >= 0.7) {
     return {
-      border: "border-l-red-600 bg-red-50/50",
-      progress: "bg-red-600",
-      pill: "bg-red-100 text-red-900",
+      border:   "border-l-red-500 bg-error/10",
+      progress: "bg-red-500",
+      pill:     "badge-error",
     };
   }
   if (level >= 0.4) {
     return {
-      border: "border-l-amber-600 bg-amber-50/50",
-      progress: "bg-amber-600",
-      pill: "bg-amber-100 text-amber-900",
+      border:   "border-l-amber-500 bg-on-tertiary-container/10",
+      progress: "bg-amber-500",
+      pill:     "badge-pending",
     };
   }
   return {
-    border: "border-l-blue-600 bg-blue-50/50",
-    progress: "bg-blue-600",
-    pill: "bg-blue-100 text-blue-900",
+    border:   "border-l-primary bg-primary/10",
+    progress: "bg-primary",
+    pill:     "badge-active",
   };
 }

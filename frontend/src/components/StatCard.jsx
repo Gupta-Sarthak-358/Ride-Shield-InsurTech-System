@@ -9,9 +9,9 @@ export default function StatCard({ label, value, hint, tone = "ink" }) {
 
   return (
     <div className={`metric-card bg-gradient-to-br ${toneMap[tone] || toneMap.ink}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-ink/45">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">{label}</p>
       <p className="mt-4 text-3xl font-bold text-primary sm:text-[2rem]">{value}</p>
-      {hint ? <p className="mt-3 max-w-[18rem] text-sm leading-6 text-ink/60">{hint}</p> : null}
+      {hint ? <p className="mt-3 max-w-[18rem] text-sm leading-6 text-on-surface-variant">{hint}</p> : null}
     </div>
   );
 }

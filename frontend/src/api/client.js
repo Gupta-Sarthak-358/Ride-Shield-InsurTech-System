@@ -10,6 +10,14 @@ const client = axios.create({
   withCredentials: true,
 });
 
+export function setAuthToken(token) {
+  if (token) {
+    client.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete client.defaults.headers.common.Authorization;
+  }
+}
+
 client.interceptors.response.use(
   (response) => response,
   (error) => {

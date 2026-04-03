@@ -8,7 +8,7 @@ export default function ActivePolicyCard({ policy, pendingPolicy }) {
       <div className="panel p-6">
         <p className="eyebrow">Coverage</p>
         <h3 className="mt-2 text-xl font-bold text-primary">No active policy</h3>
-        <p className="mt-2 text-sm leading-6 text-ink/60">Register or buy a plan to activate protection.</p>
+        <p className="mt-2 text-sm leading-6 text-on-surface-variant">Register or buy a plan to activate protection.</p>
       </div>
     );
   }
@@ -27,15 +27,15 @@ export default function ActivePolicyCard({ policy, pendingPolicy }) {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-ink/55">Premium</p>
+          <p className="text-sm text-on-surface-variant">Premium</p>
           <p className="mt-2 text-xl font-bold text-primary">{policy ? formatCurrency(data.weekly_premium) : "--"}</p>
         </div>
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-ink/55">Coverage cap</p>
+          <p className="text-sm text-on-surface-variant">Coverage cap</p>
           <p className="mt-2 text-xl font-bold text-primary">{policy ? formatCurrency(data.coverage_cap) : "--"}</p>
         </div>
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-ink/55">{policy ? "Expires" : "Activates"}</p>
+          <p className="text-sm text-on-surface-variant">{policy ? "Expires" : "Activates"}</p>
           <p className="mt-2 text-sm font-semibold text-primary">{formatDateTime(policy ? data.expires_at : data.activates_at)}</p>
         </div>
       </div>

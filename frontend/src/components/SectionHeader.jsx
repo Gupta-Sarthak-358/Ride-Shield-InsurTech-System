@@ -9,7 +9,7 @@ export default function SectionHeader({ eyebrow, title, description, action, inv
         ) : null}
         <h2 className={`text-3xl font-bold leading-tight sm:text-4xl ${invert ? "text-white" : "text-primary"}`}>{title}</h2>
         {description ? (
-          <p className={`mt-3 max-w-2xl text-sm leading-7 sm:text-base ${invert ? "text-white/78" : "text-ink/65"}`}>
+          <p className={`mt-3 max-w-2xl text-sm leading-7 sm:text-base ${invert ? "text-white/78" : "text-on-surface-variant"}`}>
             {description}
           </p>
         ) : null}

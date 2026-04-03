@@ -17,7 +17,7 @@ export default function ClaimStatus({ claim }) {
         <p className="font-semibold text-primary">{triggers.map(humanizeSlug).join(", ")}</p>
       </div>
       <h3 className="mt-4 text-lg font-bold text-primary">Why was this claim {humanizeSlug(claim.status)}?</h3>
-      <p className="mt-3 text-sm leading-6 text-ink/60">
+      <p className="mt-3 text-sm leading-6 text-on-surface-variant">
         {claim.status === "approved"
           ? `System payout approved for ${formatCurrency(claim.final_payout || claim.calculated_payout)}.`
           : claim.status === "delayed"

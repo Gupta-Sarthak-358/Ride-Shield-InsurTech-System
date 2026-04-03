@@ -28,10 +28,10 @@ export default function Navbar({ session }) {
 
   return (
     <header className="sticky top-0 z-20 mb-10 pt-5">
-      <div className="glass-strip rounded-[30px] px-5 py-4 shadow-[0_18px_50px_rgba(26,28,25,0.06)]">
+      <div className="glass-strip rounded-[30px] px-5 py-4">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,#003535_0%,#0d4d4d_100%)] text-on-primary">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-cta-gradient text-on-primary">
               <Shield size={20} />
             </div>
             <div>
@@ -47,7 +47,7 @@ export default function Navbar({ session }) {
                 to={item.to}
                 className={({ isActive }) =>
                   `rounded-[18px] px-4 py-2 text-sm font-semibold transition ${
-                    isActive ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-black/[0.04]"
+                    isActive ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-white/[0.06]"
                   }`
                 }
               >
@@ -57,7 +57,7 @@ export default function Navbar({ session }) {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <div className="items-center gap-2 rounded-full bg-emerald-50/90 px-3 py-2 text-sm font-medium text-emerald-800 lg:flex">
+            <div className="items-center gap-2 rounded-full px-3 py-2 text-sm font-medium lg:flex" style={{ background: "rgba(0, 53, 48, 0.4)", color: "#69f8e9" }}>
               <Sparkles size={16} />
               <span>{session?.session ? `${session.session.role}: ${session.session.name || session.session.username}` : "Monitoring ready"}</span>
             </div>
@@ -71,7 +71,7 @@ export default function Navbar({ session }) {
 
           <button
             type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-low text-on-surface md:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-high text-on-surface md:hidden"
             onClick={() => setMenuOpen((value) => !value)}
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
           >
@@ -80,7 +80,7 @@ export default function Navbar({ session }) {
         </div>
 
         {menuOpen ? (
-          <div className="mt-4 space-y-2 border-t border-black/5 pt-4 md:hidden">
+          <div className="mt-4 space-y-2 border-t border-white/10 pt-4 md:hidden">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}

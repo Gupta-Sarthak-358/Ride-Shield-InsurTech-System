@@ -50,7 +50,7 @@ export default function DecisionPanel({ claim, narrative }) {
 
       <div className="mt-5 flex flex-wrap gap-3">
         <span className="pill bg-primary/10 text-primary">{score}</span>
-        {claim?.id ? <span className="pill bg-white text-ink/70">Claim {claim.id.slice(0, 6)}</span> : null}
+        {claim?.id ? <span className="pill bg-white text-on-surface-variant">Claim {claim.id.slice(0, 6)}</span> : null}
       </div>
 
       <div className="mt-5 rounded-[22px] bg-white/75 p-4">

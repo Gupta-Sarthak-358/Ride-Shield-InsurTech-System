@@ -78,11 +78,11 @@ export default function RiskScoreCard({ workerId }) {
   const riskLevel = breakdown.risk_level || "unknown";
   const riskColor =
     {
-      low: { bg: "bg-emerald-100", text: "text-emerald-800", dot: "bg-emerald-500" },
-      moderate: { bg: "bg-amber-100", text: "text-amber-800", dot: "bg-amber-500" },
-      elevated: { bg: "bg-orange-100", text: "text-orange-800", dot: "bg-orange-500" },
-      high: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
-    }[riskLevel] || { bg: "bg-gray-100", text: "text-gray-800", dot: "bg-gray-500" };
+      low:      { style: { background: "rgba(0,53,48,0.4)", color: "#69f8e9" },       dot: "bg-emerald-400" },
+      moderate: { style: { background: "rgba(71,35,190,0.25)", color: "#cabeff" },    dot: "bg-violet-400" },
+      elevated: { style: { background: "rgba(120,53,0,0.3)", color: "#f4a135" },      dot: "bg-amber-400" },
+      high:     { style: { background: "rgba(147,0,10,0.25)", color: "#ffb4ab" },     dot: "bg-red-400" },
+    }[riskLevel] || { style: { background: "rgba(34,42,61,0.6)", color: "#c6c5d1" }, dot: "bg-slate-400" };
   const authorityClass =
     riskLevel === "high"
       ? "card-primary border-accent-left border-accent-error"
@@ -101,7 +101,7 @@ export default function RiskScoreCard({ workerId }) {
           <p className="mt-4 text-5xl font-extrabold leading-none text-primary">{scorePercent}%</p>
           <p className="mt-2 text-sm font-medium text-on-surface-variant">Current payout-risk pressure</p>
         </div>
-        <span className={`pill ${riskColor.bg} ${riskColor.text}`}>
+        <span className="pill" style={riskColor.style}>
           <span className={`mr-2 inline-block h-2 w-2 rounded-full ${riskColor.dot}`} />
           {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
         </span>

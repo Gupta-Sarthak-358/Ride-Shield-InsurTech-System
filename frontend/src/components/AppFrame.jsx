@@ -46,10 +46,10 @@ export default function AppFrame({ children }) {
 
   return (
     <div className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-surface lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-surface-container-lowest lg:flex" style={{ borderRight: "1px solid rgba(69, 70, 79, 0.15)" }}>
         <div className="flex h-full flex-col p-6">
           <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[linear-gradient(135deg,#003535_0%,#0d4d4d_100%)] text-on-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-cta-gradient text-on-primary">
               <Shield size={18} />
             </div>
             <div>
@@ -70,7 +70,7 @@ export default function AppFrame({ children }) {
                 to={item.to}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-semibold transition ${
-                    isActive ? "bg-surface-container-lowest text-primary shadow-[0_10px_30px_rgba(26,28,25,0.06)]" : "text-on-surface-variant hover:bg-surface-container-low"
+                    isActive ? "bg-surface-container text-primary shadow-ambient-glow" : "text-on-surface-variant hover:bg-surface-container-low"
                   }`
                 }
               >
@@ -80,10 +80,10 @@ export default function AppFrame({ children }) {
             ))}
           </nav>
 
-          <div className="mt-auto space-y-2 border-t border-black/5 pt-6">
-            <div className="rounded-[24px] bg-surface-container-lowest p-4 shadow-[0_12px_30px_rgba(26,28,25,0.05)]">
+          <div className="mt-auto space-y-2 border-t border-white/10 pt-6">
+            <div className="rounded-[24px] bg-surface-container p-4" style={{ border: "1px solid rgba(69, 70, 79, 0.15)" }}>
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-container text-sm font-bold text-on-primary">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-container text-sm font-bold text-primary">
                   {initials}
                 </div>
                 <div>
@@ -91,7 +91,7 @@ export default function AppFrame({ children }) {
                   <p className="text-xs text-on-surface-variant">{role === "admin" ? "Operations session" : "Protected worker session"}</p>
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-800">
+              <div className="mt-4 flex items-center gap-2 text-sm font-medium" style={{ color: "#69f8e9" }}>
                 <Sparkles size={15} />
                 <span>{role === "admin" ? "Live oversight enabled" : "Automatic protection active"}</span>
               </div>
@@ -110,7 +110,7 @@ export default function AppFrame({ children }) {
       </aside>
 
       <main className="min-h-screen lg:ml-64">
-        <header className="sticky top-0 z-30 border-b border-black/5 bg-surface-container-lowest/85 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 bg-surface-container-lowest/85 backdrop-blur-xl" style={{ borderBottom: "1px solid rgba(69, 70, 79, 0.15)" }}>
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4">
               <div>
@@ -122,14 +122,14 @@ export default function AppFrame({ children }) {
             </div>
 
             <div className="hidden items-center gap-4 md:flex">
-              <div className="rounded-full bg-surface-container-low px-4 py-2 text-sm font-medium text-on-surface-variant">
+              <div className="rounded-full bg-surface-container-high px-4 py-2 text-sm font-medium text-on-surface-variant">
                 {role === "admin" ? "Operational review mode" : "Worker coverage mode"}
               </div>
-              <button type="button" className="button-secondary !rounded-full !bg-tertiary-container !px-4 !py-2 !text-on-primary" aria-label="Emergency alert">
+              <button type="button" className="inline-flex items-center gap-2 rounded-full bg-tertiary-container px-4 py-2 text-sm font-semibold text-on-tertiary-container transition hover:brightness-110" aria-label="Emergency alert">
                 <Siren size={16} />
                 Alert
               </button>
-              <button type="button" aria-label="Notifications" className="rounded-full bg-surface-container-low p-3 text-on-surface-variant transition hover:bg-surface-container">
+              <button type="button" aria-label="Notifications" className="rounded-full bg-surface-container-high p-3 text-on-surface-variant transition hover:bg-surface-container-highest">
                 <Bell size={16} />
               </button>
             </div>
@@ -139,7 +139,7 @@ export default function AppFrame({ children }) {
         <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:px-8 lg:pb-8">{children}</div>
       </main>
 
-      <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t border-black/5 bg-surface-container-lowest/95 px-4 py-3 backdrop-blur-xl lg:hidden ${navItems.length <= 1 ? "hidden" : ""}`}>
+      <nav className={`fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest/95 px-4 py-3 backdrop-blur-xl lg:hidden ${navItems.length <= 1 ? "hidden" : ""}`} style={{ borderTop: "1px solid rgba(69, 70, 79, 0.15)" }}>
         <div className="mx-auto flex max-w-xl items-center justify-around">
           {navItems.map((item) => (
             <NavLink

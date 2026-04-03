@@ -1,4 +1,4 @@
-import client from "../../src/api/client";
+import client, { setAuthToken } from "../../src/api/client";
 
 vi.mock("react-hot-toast", () => ({
   default: {
@@ -21,6 +21,10 @@ function setLocation(pathname, search = "") {
 }
 
 describe("API client auth redirects", () => {
+  beforeEach(() => {
+    setAuthToken(null);
+  });
+
   afterAll(() => {
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -56,5 +60,13 @@ describe("API client auth redirects", () => {
     });
 
     expect(window.location.href).toBe("/auth?reason=session_expired");
+  });
+
+  it("sets and clears the default authorization header", () => {
+    setAuthToken("session-token");
+    expect(client.defaults.headers.common.Authorization).toBe("Bearer session-token");
+
+    setAuthToken(null);
+    expect(client.defaults.headers.common.Authorization).toBeUndefined();
   });
 });

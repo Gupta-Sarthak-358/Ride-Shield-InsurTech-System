@@ -134,7 +134,7 @@ export default function Dashboard() {
   }, [latestPayout, approvedClaims]);
 
   if (loading) {
-    return <div className="panel p-8 text-center text-ink/60">Loading dashboard...</div>;
+    return <div className="panel p-8 text-center text-on-surface-variant">Loading dashboard...</div>;
   }
 
   if (error) {
@@ -239,7 +239,7 @@ export default function Dashboard() {
               <div className="mt-4 flex items-center gap-3">
                 <span
                   className={`pill ${
-                    policyState?.active_policy ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                    policyState?.active_policy ? "badge-active" : "badge-pending"
                   }`}
                 >
                   <span

@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children, role }) {
   const params = useParams();
 
   if (booting) {
-    return <div className="panel p-8 text-center text-ink/60">Restoring session...</div>;
+    return <div className="panel p-8 text-center text-on-surface-variant">Restoring session...</div>;
   }
 
   if (!isAuthenticated) {

@@ -43,7 +43,10 @@ export default function ModelHealthBadge() {
   }
 
   const status = modelData.status || "unknown";
-  const statusColor = status === "active" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800";
+  const statusStyle =
+    status === "active"
+      ? { background: "rgba(0,53,48,0.4)", color: "#69f8e9" }
+      : { background: "rgba(71,35,190,0.25)", color: "#cabeff" };
   const statusDot = status === "active" ? "bg-emerald-500" : "bg-amber-500";
 
   const trainedDate = modelData.trained_at ? new Date(modelData.trained_at).toLocaleDateString() : "Unknown";
@@ -61,7 +64,7 @@ export default function ModelHealthBadge() {
             </div>
           </div>
         </div>
-        <span className={`pill ${statusColor} text-[10px]`}>
+        <span className="pill text-[10px]" style={statusStyle}>
           <span className={`mr-1 inline-block h-2 w-2 rounded-full ${statusDot}`} />
           {status === "active" ? "Live" : "Fallback"}
         </span>

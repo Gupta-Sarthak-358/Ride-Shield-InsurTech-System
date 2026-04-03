@@ -3,9 +3,15 @@ import { flushSync } from "react-dom";
 import toast from "react-hot-toast";
 
 import { authApi } from "../api/auth";
+import { setAuthToken } from "../api/client";
 
 const SESSION_KEY = "rideshield.session_meta";
 const LEGACY_WORKER_ID_KEY = "rideshield.workerId";
+const SESSION_TOKEN_KEY = "rideshield.session_token";
+
+function canUseSessionTokenFallback() {
+  return typeof window !== "undefined" && window.location.hostname === "localhost";
+}
 
 export function sanitizeSessionMeta(meta) {
   const role = meta?.session?.role;
@@ -44,6 +50,50 @@ export function clearStoredSessionMeta() {
   }
 }
 
+export function readStoredSessionToken() {
+  if (!canUseSessionTokenFallback()) {
+    return null;
+  }
+
+  try {
+    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function writeStoredSessionToken(token) {
+  setAuthToken(token || null);
+
+  if (!canUseSessionTokenFallback()) {
+    return;
+  }
+
+  try {
+    if (token) {
+      sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    } else {
+      sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    }
+  } catch {
+    // Storage unavailable
+  }
+}
+
+export function clearStoredSessionToken() {
+  setAuthToken(null);
+
+  if (!canUseSessionTokenFallback()) {
+    return;
+  }
+
+  try {
+    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  } catch {
+    // Storage unavailable
+  }
+}
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -53,11 +103,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true;
     const stored = readStoredSessionMeta();
+    const storedToken = readStoredSessionToken();
     if (stored) {
       writeStoredSessionMeta(stored);
     } else {
       clearStoredSessionMeta();
     }
+    setAuthToken(storedToken);
 
     async function restore() {
       try {
@@ -72,6 +124,7 @@ export function AuthProvider({ children }) {
         if (active) {
           setSession(null);
           clearStoredSessionMeta();
+          clearStoredSessionToken();
           if (error?.response?.status !== 401) {
             toast.error("Session could not be restored. Please sign in again.");
           }
@@ -102,6 +155,7 @@ export function AuthProvider({ children }) {
           setSession(next);
         });
         writeStoredSessionMeta(next);
+        writeStoredSessionToken(response.data.token);
         return next;
       },
       async loginAdmin(username, password) {
@@ -111,6 +165,7 @@ export function AuthProvider({ children }) {
           setSession(next);
         });
         writeStoredSessionMeta(next);
+        writeStoredSessionToken(response.data.token);
         return next;
       },
       async logout() {
@@ -120,6 +175,7 @@ export function AuthProvider({ children }) {
           // cookie cleared by server
         }
         clearStoredSessionMeta();
+        clearStoredSessionToken();
         flushSync(() => {
           setSession(null);
         });

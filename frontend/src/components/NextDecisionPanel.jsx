@@ -51,13 +51,13 @@ export default function NextDecisionPanel({ incident }) {
       </p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-[20px] bg-white/75 p-4">
+        <div className="rounded-[20px] border border-primary/10 bg-surface-container-high/75 p-4">
           <p className="text-sm text-on-surface-variant">Fraud score</p>
           <p className="mt-2 text-2xl font-bold text-primary">
             {Math.round(Number(incident.max_fraud_score || 0) * 100)}%
           </p>
         </div>
-        <div className="rounded-[20px] bg-white/75 p-4">
+        <div className="rounded-[20px] border border-primary/10 bg-surface-container-high/75 p-4">
           <p className="text-sm text-on-surface-variant">Payout at risk</p>
           <p className="mt-2 text-2xl font-bold text-primary">
             {formatCurrency(incident.total_calculated_payout)}
@@ -78,7 +78,7 @@ export default function NextDecisionPanel({ incident }) {
           <div className="mt-2 flex flex-wrap gap-2">
             {topFactors.length ? (
               topFactors.map((factor) => (
-                <span key={factor.factor} className="pill bg-white text-ink/70">
+                <span key={factor.factor} className="pill-neutral">
                   {factor.label}
                 </span>
               ))

@@ -58,16 +58,16 @@ export default function DisruptionMap({ events = [], city = "delhi" }) {
   return (
     <div className="panel p-6">
       <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink/45">Disruption map</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-on-surface-variant">Disruption map</p>
         <h3 className="mt-1 text-2xl font-bold">
           Zone heat view for {city === "all" ? "all monitored cities" : humanizeSlug(city)}
         </h3>
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
-        <div className="relative min-h-72 overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,rgba(235,236,231,1),rgba(214,218,214,1))] p-4">
-          <div className="absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
-          <div className="absolute inset-6 rounded-[1.75rem] border border-black/8" />
-          <div className="absolute inset-[18%] rounded-[1.75rem] bg-[radial-gradient(circle_at_25%_30%,rgba(255,255,255,0.8),transparent_18%),radial-gradient(circle_at_70%_62%,rgba(255,255,255,0.55),transparent_16%),linear-gradient(135deg,rgba(68,72,72,0.10),rgba(68,72,72,0.03))]" />
+        <div className="relative min-h-72 overflow-hidden rounded-[2rem] p-4" style={{ background: "linear-gradient(180deg, #131b2e 0%, #0b1326 100%)" }}>
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "linear-gradient(rgba(70,220,205,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(70,220,205,0.08) 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
+          <div className="absolute inset-6 rounded-[1.75rem]" style={{ border: "1px solid rgba(69,70,79,0.2)" }} />
+          <div className="absolute inset-[18%] rounded-[1.75rem]" style={{ background: "radial-gradient(circle at 25% 30%, rgba(70,220,205,0.05), transparent 18%), radial-gradient(circle at 70% 62%, rgba(202,190,255,0.04), transparent 16%)" }} />
           {zoneSummary.length ? (
             zoneSummary.map((zone) => {
               const coord = ZONE_COORDS[zone.zone] || { top: "50%", left: "50%", label: "mt-3" };
@@ -79,29 +79,29 @@ export default function DisruptionMap({ events = [], city = "delhi" }) {
                 >
                   <div className={`mx-auto h-4 w-4 rounded-full ring-4 ring-white/70 shadow-[0_0_0_10px_rgba(255,255,255,0.12)] ${intensityClass(zone.severity)}`} />
                   <div className={coord.label}>
-                    <p className="text-xs font-semibold leading-tight">{humanizeSlug(zone.zone)}</p>
-                    <p className="text-[11px] text-ink/55">{zone.count} incidents</p>
+                    <p className="text-xs font-semibold leading-tight text-on-surface">{humanizeSlug(zone.zone)}</p>
+                    <p className="text-[11px] text-on-surface-variant">{zone.count} incidents</p>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-ink/55">No current disruptions to map.</div>
+            <div className="flex h-full items-center justify-center text-sm text-on-surface-variant">No current disruptions to map.</div>
           )}
         </div>
         <div className="space-y-3">
           {zoneSummary.length ? (
             zoneSummary.map((zone) => (
-              <div key={zone.zone} className="rounded-2xl bg-black/[0.03] p-4">
+              <div key={zone.zone} className="rounded-2xl bg-surface-container-high p-4" style={{ border: "1px solid rgba(69,70,79,0.15)" }}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold">{humanizeSlug(zone.zone)}</p>
+                  <p className="font-semibold text-on-surface">{humanizeSlug(zone.zone)}</p>
                   <span className={`pill text-white ${intensityClass(zone.severity)}`}>Severity {zone.severity.toFixed(2)}</span>
                 </div>
-                <p className="mt-2 text-sm text-ink/65">{zone.triggers.map(humanizeSlug).join(", ")}</p>
+                <p className="mt-2 text-sm text-on-surface-variant">{zone.triggers.map(humanizeSlug).join(", ")}</p>
               </div>
             ))
           ) : (
-            <p className="text-sm text-ink/55">No disruption evidence available in the current time window.</p>
+            <p className="text-sm text-on-surface-variant">No disruption evidence available in the current time window.</p>
           )}
         </div>
       </div>

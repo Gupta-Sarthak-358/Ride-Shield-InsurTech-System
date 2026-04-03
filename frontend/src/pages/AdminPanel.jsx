@@ -17,6 +17,35 @@ import ReviewQueue from "../components/ReviewQueue";
 import { groupClaimsByIncident } from "../utils/claimGroups";
 import { formatCurrency, formatPercent, formatRelative, humanizeSlug } from "../utils/formatters";
 
+function forecastTone(band) {
+  switch (band) {
+    case "critical":
+      return {
+        container: "border-red-400/30",
+        pill: "badge-error",
+        progress: "bg-red-500",
+      };
+    case "elevated":
+      return {
+        container: "border-amber-300/25",
+        pill: "badge-pending",
+        progress: "bg-amber-500",
+      };
+    case "guarded":
+      return {
+        container: "border-blue-300/25",
+        pill: "badge-guarded",
+        progress: "bg-blue-500",
+      };
+    default:
+      return {
+        container: "border-emerald-300/20",
+        pill: "badge-active",
+        progress: "bg-emerald-500",
+      };
+  }
+}
+
 export default function AdminPanel() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedZone, setSelectedZone] = useState("all");
@@ -123,7 +152,7 @@ export default function AdminPanel() {
       : "Scheduler paused";
 
   if (loading) {
-    return <div className="panel p-8 text-center text-ink/60">Loading admin panel...</div>;
+    return <div className="panel p-8 text-center text-on-surface-variant">Loading admin panel...</div>;
   }
 
   if (loadError) {
@@ -266,23 +295,27 @@ export default function AdminPanel() {
                 <h3 className="text-lg font-bold text-primary">Forecast horizon</h3>
               </div>
               <div className="space-y-3">
-                {forecastEntries.map((entry) => (
-                  <div key={entry.city} className="rounded-[20px] bg-surface-container-low/80 p-4 border border-amber-200/20">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-primary capitalize">{entry.city}</p>
-                      <span className="pill bg-amber-100 text-amber-900 text-xs font-bold">{entry.band}</span>
+                {forecastEntries.map((entry) => {
+                  const tone = forecastTone(entry.band);
+
+                  return (
+                    <div key={entry.city} className={`rounded-[20px] border bg-surface-container-low/80 p-4 ${tone.container}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-primary capitalize">{entry.city}</p>
+                        <span className={`pill text-xs font-bold capitalize ${tone.pill}`}>{entry.band}</span>
+                      </div>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container-lowest">
+                        <div
+                          className={`h-full rounded-full transition-all ${tone.progress}`}
+                          style={{ width: `${Math.min(100, entry.projected_risk * 100)}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs leading-6 text-on-surface-variant">
+                        Base {entry.base_risk.toFixed(2)} - Projected {entry.projected_risk.toFixed(2)} ({entry.active_incidents} active)
+                      </p>
                     </div>
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container-lowest">
-                      <div
-                        className="h-full bg-amber-500 rounded-full transition-all"
-                        style={{ width: `${Math.min(100, entry.projected_risk * 100)}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs leading-6 text-on-surface-variant">
-                      Base {entry.base_risk.toFixed(2)} - Projected {entry.projected_risk.toFixed(2)} ({entry.active_incidents} active)
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
                 {!forecastEntries.length ? (
                   <p className="text-sm text-on-surface-variant">No forecast entries match the current filters.</p>
                 ) : null}

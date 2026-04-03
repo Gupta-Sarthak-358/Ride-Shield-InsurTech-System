@@ -71,11 +71,11 @@ export default function ForecastCards({ city = "delhi" }) {
     const risk_band = forecast.risk_band || "low";
 
     const bandColor = {
-      low: { bg: "bg-emerald-100", text: "text-emerald-800", dot: "bg-emerald-500" },
-      guarded: { bg: "bg-amber-100", text: "text-amber-800", dot: "bg-amber-500" },
-      elevated: { bg: "bg-orange-100", text: "text-orange-800", dot: "bg-orange-500" },
-      critical: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
-    }[risk_band] || { bg: "bg-gray-100", text: "text-gray-800", dot: "bg-gray-500" };
+      low:      { pill: "badge-active", dot: "bg-emerald-400" },
+      guarded:  { pill: "badge-guarded", dot: "bg-blue-300" },
+      elevated: { pill: "badge-pending", dot: "bg-amber-400" },
+      critical: { pill: "badge-error", dot: "bg-red-400" },
+    }[risk_band] || { pill: "pill-subtle", dot: "bg-slate-400" };
 
     const topTriggers = forecast.likely_triggers || [];
 
@@ -92,7 +92,7 @@ export default function ForecastCards({ city = "delhi" }) {
             </p>
             <p className="text-xs text-on-surface-variant">Disruption risk</p>
           </div>
-          <span className={`pill ${bandColor.bg} ${bandColor.text} text-[10px]`}>
+          <span className={`${bandColor.pill} text-[10px]`}>
             <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${bandColor.dot}`} />
             {risk_band}
           </span>

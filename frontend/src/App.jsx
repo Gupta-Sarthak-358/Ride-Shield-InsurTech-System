@@ -20,7 +20,7 @@ function RedirectIfAuth({ children }) {
   const { booting, isAuthenticated, role } = useAuth();
 
   if (booting) {
-    return <div className="panel p-8 text-center text-ink/60">Restoring session...</div>;
+    return <div className="panel p-8 text-center text-on-surface-variant">Restoring session...</div>;
   }
 
   if (!isAuthenticated) {
@@ -41,7 +41,7 @@ function RedirectIfAuth({ children }) {
 function AppShell() {
   return (
     <div className="min-h-screen text-ink">
-      <Suspense fallback={<div className="panel m-6 p-8 text-center text-ink/60">Loading page...</div>}>
+      <Suspense fallback={<div className="panel m-6 p-8 text-center text-on-surface-variant">Loading page...</div>}>
         <Routes>
           {/* Public routes — all share PublicShell (navbar + max-width container) */}
           <Route path="/" element={<PublicShell><Home /></PublicShell>} />
