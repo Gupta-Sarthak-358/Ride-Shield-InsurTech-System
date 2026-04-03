@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCurrency,
+  formatHours,
   formatPercent,
+  formatReviewWindow,
   formatScore,
   humanizeSlug,
   statusPill,
@@ -51,6 +53,34 @@ describe("formatScore", () => {
 
   it("returns -- for null", () => {
     expect(formatScore(null)).toBe("--");
+  });
+});
+
+describe("formatHours", () => {
+  it("formats hour counts to rounded h labels", () => {
+    expect(formatHours(18.3)).toBe("18h");
+  });
+
+  it("returns <1h for short windows", () => {
+    expect(formatHours(0.4)).toBe("<1h");
+  });
+
+  it("returns -- for null", () => {
+    expect(formatHours(null)).toBe("--");
+  });
+});
+
+describe("formatReviewWindow", () => {
+  it("formats future deadlines as due in", () => {
+    expect(formatReviewWindow(5.2)).toBe("Due in 5h");
+  });
+
+  it("formats negative deadlines as overdue", () => {
+    expect(formatReviewWindow(-2.2)).toBe("Overdue by 2h");
+  });
+
+  it("returns -- for null", () => {
+    expect(formatReviewWindow(null)).toBe("--");
   });
 });
 

@@ -10,6 +10,7 @@ from backend.utils.time import utc_now_naive
 class DecisionEngine:
     WEIGHTS = {"disruption": 0.35, "confidence": 0.25, "fraud_inverse": 0.25, "trust": 0.15}
     THRESHOLDS = {"approved": 0.70, "delayed": 0.50}
+    LOW_RISK_REVIEW_FLAGS = {"movement", "pre_activity"}
 
     def decide(self, disruption_score: float, event_confidence: float, fraud_result: Dict, trust_score: float) -> Dict:
         adjusted_fraud = fraud_result["adjusted_fraud_score"]
@@ -33,18 +34,29 @@ class DecisionEngine:
             and event_confidence >= 0.8
             and disruption_score >= 0.68
         )
+        trusted_low_risk_approve = (
+            adjusted_fraud <= 0.18
+            and trust_score >= 0.70
+            and event_confidence >= 0.75
+            and final_score >= 0.60
+            and set(fraud_flags).issubset(self.LOW_RISK_REVIEW_FLAGS)
+        )
         auto_reject = (
             adjusted_fraud >= 0.55
             and len(fraud_flags) >= 3
             and trust_score <= 0.35
         )
 
-        if auto_approve or final_score >= self.THRESHOLDS["approved"]:
+        if auto_approve or trusted_low_risk_approve or final_score >= self.THRESHOLDS["approved"]:
             decision = "approved"
             explanation = (
                 f"Claim approved with high confidence (score: {final_score})."
-                if not auto_approve
-                else f"Claim auto-approved by strong signal alignment (score: {final_score})."
+                if not (auto_approve or trusted_low_risk_approve)
+                else (
+                    f"Claim auto-approved by strong signal alignment (score: {final_score})."
+                    if auto_approve
+                    else f"Claim approved for trusted low-fraud profile despite mild review signals (score: {final_score})."
+                )
             )
         elif auto_reject or final_score < self.THRESHOLDS["delayed"]:
             decision = "rejected"
@@ -77,6 +89,7 @@ class DecisionEngine:
                 "trust_score": trust_score,
                 "fraud_flags": fraud_flags,
                 "auto_approve": auto_approve,
+                "trusted_low_risk_approve": trusted_low_risk_approve,
                 "auto_reject": auto_reject,
             },
             "review_deadline": utc_now_naive() + timedelta(hours=24) if decision == "delayed" else None,

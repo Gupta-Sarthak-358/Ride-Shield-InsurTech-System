@@ -401,9 +401,10 @@
 
   .badge-guarded {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold;
-    background: rgba(30, 42, 94, 0.48);
-    color: #dde1ff;
-    border: 1px solid rgba(185, 195, 255, 0.16);
+    background: rgba(30, 42, 94, 0.72);
+    color: #eef1ff;
+    border: 1px solid rgba(185, 195, 255, 0.3);
+    box-shadow: inset 0 1px 0 rgba(221, 225, 255, 0.08);
   }
 
   .badge-error {

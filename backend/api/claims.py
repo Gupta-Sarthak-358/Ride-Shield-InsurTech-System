@@ -20,6 +20,129 @@ from backend.utils.time import utc_now_naive
 router = APIRouter(prefix="/api/claims", tags=["Claims"])
 
 
+def _coerce_float(value, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _humanize_label(value: str | None) -> str:
+    if not value:
+        return "system signal"
+    return " ".join(part.capitalize() for part in str(value).split("_") if part)
+
+
+def _extract_fraud_model_payload(claim: Claim) -> dict:
+    if not isinstance(claim.decision_breakdown, dict):
+        return {}
+    fraud_model = claim.decision_breakdown.get("fraud_model")
+    return fraud_model if isinstance(fraud_model, dict) else {}
+
+
+def _build_review_context(claim: Claim, now) -> dict:
+    fraud_model = _extract_fraud_model_payload(claim)
+    fraud_probability = _coerce_float(fraud_model.get("fraud_probability"), _coerce_float(claim.fraud_score))
+    payout_amount = _coerce_float(claim.final_payout, _coerce_float(claim.calculated_payout))
+    payout_risk = round(payout_amount * max(0.0, min(1.0, fraud_probability)), 2)
+    hours_waiting = round(max(0.0, (now - claim.created_at).total_seconds() / 3600), 1) if claim.created_at else 0.0
+    hours_until_deadline = (
+        round((claim.review_deadline - now).total_seconds() / 3600, 1)
+        if claim.review_deadline
+        else None
+    )
+    overdue_hours = (
+        round(max(0.0, (now - claim.review_deadline).total_seconds() / 3600), 1)
+        if claim.review_deadline
+        else 0.0
+    )
+    is_overdue = bool(claim.review_deadline and claim.review_deadline < now)
+    deadline_pressure = 0.35
+    if hours_until_deadline is not None:
+        deadline_pressure = 1.0 if is_overdue else max(0.0, 1 - min(max(hours_until_deadline, 0.0), 24.0) / 24.0)
+
+    urgency_score = round(
+        min(
+            1.0,
+            max(
+                0.0,
+                (0.45 * deadline_pressure)
+                + (0.30 * min(payout_risk / 120.0, 1.0))
+                + (0.15 * max(0.0, min(1.0, fraud_probability)))
+                + (0.10 * min(hours_waiting / 24.0, 1.0))
+                + (0.15 if is_overdue else 0.0),
+            ),
+        ),
+        3,
+    )
+
+    if is_overdue or urgency_score >= 0.72:
+        urgency_band = "critical"
+    elif urgency_score >= 0.48:
+        urgency_band = "warning"
+    else:
+        urgency_band = "steady"
+
+    event_confidence = _coerce_float(claim.event_confidence)
+    trust_score = _coerce_float(claim.trust_score, 0.5)
+    decision_confidence = round(
+        min(
+            1.0,
+            max(
+                0.0,
+                (0.55 * event_confidence)
+                + (0.25 * trust_score)
+                + (0.20 * (1 - max(0.0, min(1.0, fraud_probability)))),
+            ),
+        ),
+        3,
+    )
+    if decision_confidence >= 0.75:
+        decision_confidence_band = "high"
+    elif decision_confidence >= 0.55:
+        decision_confidence_band = "moderate"
+    else:
+        decision_confidence_band = "low"
+
+    top_factors = fraud_model.get("top_factors") if isinstance(fraud_model.get("top_factors"), list) else []
+    primary_factor = top_factors[0]["label"] if top_factors else None
+    secondary_factors = [factor.get("label") for factor in top_factors[1:3] if factor.get("label")]
+    fraud_flags = []
+    if isinstance(claim.decision_breakdown, dict):
+        inputs = claim.decision_breakdown.get("inputs")
+        if isinstance(inputs, dict) and isinstance(inputs.get("fraud_flags"), list):
+            fraud_flags = [_humanize_label(flag) for flag in inputs["fraud_flags"][:3]]
+    if not primary_factor and fraud_flags:
+        primary_factor = fraud_flags[0]
+        secondary_factors = fraud_flags[1:3]
+
+    if is_overdue:
+        priority_reason = "Overdue manual review"
+    elif hours_until_deadline is not None and hours_until_deadline <= 6:
+        priority_reason = "SLA breach risk"
+    elif payout_risk >= 120:
+        priority_reason = "High payout exposure"
+    elif fraud_probability >= 0.35:
+        priority_reason = "Elevated fraud pressure"
+    else:
+        priority_reason = "Resolve before backlog grows"
+
+    return {
+        "fraud_probability": fraud_probability,
+        "payout_risk": payout_risk,
+        "hours_waiting": hours_waiting,
+        "hours_until_deadline": hours_until_deadline,
+        "overdue_hours": overdue_hours,
+        "urgency_score": urgency_score,
+        "urgency_band": urgency_band,
+        "priority_reason": priority_reason,
+        "decision_confidence": decision_confidence,
+        "decision_confidence_band": decision_confidence_band,
+        "primary_factor": primary_factor,
+        "secondary_factors": secondary_factors,
+    }
+
+
 def serialize_claim_summary(claim: Claim) -> dict:
     payout_info = None
     if claim.payout:
@@ -162,20 +285,33 @@ async def get_review_queue(
         )
     ).scalars().all()
     now = utc_now_naive()
-    claims_data = []
+    review_candidates = []
     overdue_count = 0
     for claim in claims:
         is_overdue = bool(claim.review_deadline and claim.review_deadline < now)
         overdue_count += 1 if is_overdue else 0
-        claims_data.append(
-            {
-                **serialize_claim_summary(claim),
-                "city": claim.event.city if claim.event else None,
-                "zone": claim.event.zone if claim.event else None,
-                "event_type": claim.event.event_type if claim.event else None,
-                "is_overdue": is_overdue,
-            }
+        review_context = _build_review_context(claim, now)
+        review_candidates.append(
+            (
+                review_context["urgency_score"],
+                claim.review_deadline or now + timedelta(days=7),
+                {
+                    **serialize_claim_summary(claim),
+                    "city": claim.event.city if claim.event else None,
+                    "zone": claim.event.zone if claim.event else None,
+                    "event_type": claim.event.event_type if claim.event else None,
+                    "is_overdue": is_overdue,
+                    **review_context,
+                },
+            )
         )
+    claims_data = [
+        payload
+        for _, _, payload in sorted(
+            review_candidates,
+            key=lambda item: (-item[0], item[1], item[2]["created_at"] or ""),
+        )
+    ]
     return {"total_pending": len(claims_data), "overdue_count": overdue_count, "claims": claims_data}
 
 

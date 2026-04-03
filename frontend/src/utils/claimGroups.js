@@ -8,6 +8,16 @@ function bucketTimestamp(value, bucketMinutes = 60) {
   return String(Math.floor(date.getTime() / bucketMs) * bucketMs);
 }
 
+function urgencyRank(band) {
+  if (band === "critical") {
+    return 3;
+  }
+  if (band === "warning") {
+    return 2;
+  }
+  return 1;
+}
+
 export function groupClaimsByIncident(claims = [], options = {}) {
   if (!claims) {
     return [];
@@ -40,6 +50,17 @@ export function groupClaimsByIncident(claims = [], options = {}) {
         max_fraud_score: null,
         max_fraud_probability: null,
         avg_final_score: 0,
+        avg_trust_score: 0,
+        max_decision_confidence: 0,
+        decision_confidence_band: "low",
+        max_urgency_score: 0,
+        urgency_band: "steady",
+        priority_reason: null,
+        payout_risk: 0,
+        hours_waiting: 0,
+        hours_until_deadline: null,
+        primary_factor: null,
+        secondary_factors: [],
         overdue_count: 0,
         top_factors: [],
         fraud_model_version: null,
@@ -59,6 +80,7 @@ export function groupClaimsByIncident(claims = [], options = {}) {
     group.total_calculated_payout += Number(claim.calculated_payout || 0);
     group.total_final_payout += Number(claim.final_payout || 0);
     group.avg_final_score += Number(claim.final_score || 0);
+    group.avg_trust_score += Number(claim.trust_score || 0);
     group.max_fraud_score = group.max_fraud_score === null
       ? Number(claim.fraud_score || 0)
       : Math.max(group.max_fraud_score, Number(claim.fraud_score || 0));
@@ -76,6 +98,27 @@ export function groupClaimsByIncident(claims = [], options = {}) {
     }
     if (group.fraud_fallback_used === null && fraudModel.fallback_used !== undefined) {
       group.fraud_fallback_used = Boolean(fraudModel.fallback_used);
+    }
+    const decisionConfidence = Number(claim.decision_confidence || 0);
+    if (decisionConfidence >= group.max_decision_confidence) {
+      group.max_decision_confidence = decisionConfidence;
+      group.decision_confidence_band = claim.decision_confidence_band || group.decision_confidence_band;
+    }
+    const urgencyScore = Number(claim.urgency_score || 0);
+    if (urgencyScore >= group.max_urgency_score) {
+      group.max_urgency_score = urgencyScore;
+      group.urgency_band = claim.urgency_band || group.urgency_band;
+      group.priority_reason = claim.priority_reason || group.priority_reason;
+      group.primary_factor = claim.primary_factor || group.primary_factor;
+      group.secondary_factors = Array.isArray(claim.secondary_factors) ? claim.secondary_factors.slice(0, 2) : group.secondary_factors;
+      group.hours_waiting = Number(claim.hours_waiting || group.hours_waiting || 0);
+    }
+    group.payout_risk += Number(claim.payout_risk || 0);
+    if (claim.hours_until_deadline !== null && claim.hours_until_deadline !== undefined) {
+      const deadlineHours = Number(claim.hours_until_deadline);
+      group.hours_until_deadline = group.hours_until_deadline === null
+        ? deadlineHours
+        : Math.min(group.hours_until_deadline, deadlineHours);
     }
 
     if (claim.review_deadline && (!group.review_deadline || new Date(claim.review_deadline) < new Date(group.review_deadline))) {
@@ -102,7 +145,23 @@ export function groupClaimsByIncident(claims = [], options = {}) {
         ...group,
         status,
         avg_final_score: group.claim_count ? group.avg_final_score / group.claim_count : 0,
+        avg_trust_score: group.claim_count ? group.avg_trust_score / group.claim_count : 0,
+        payout_risk: Number(group.payout_risk.toFixed(2)),
       };
     })
-    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    .sort((a, b) => {
+      if ((b.overdue_count || 0) !== (a.overdue_count || 0)) {
+        return (b.overdue_count || 0) - (a.overdue_count || 0);
+      }
+      if ((b.max_urgency_score || 0) !== (a.max_urgency_score || 0)) {
+        return (b.max_urgency_score || 0) - (a.max_urgency_score || 0);
+      }
+      if (urgencyRank(b.urgency_band) !== urgencyRank(a.urgency_band)) {
+        return urgencyRank(b.urgency_band) - urgencyRank(a.urgency_band);
+      }
+      if (a.hours_until_deadline !== null && b.hours_until_deadline !== null && a.hours_until_deadline !== b.hours_until_deadline) {
+        return a.hours_until_deadline - b.hours_until_deadline;
+      }
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
 }

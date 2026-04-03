@@ -1,7 +1,47 @@
+import clsx from "clsx";
 import { Check, X } from "lucide-react";
 
 import { groupClaimsByIncident } from "../utils/claimGroups";
-import { formatCurrency, formatRelative, formatScore, humanizeSlug, statusPill } from "../utils/formatters";
+import {
+  formatCurrency,
+  formatHours,
+  formatReviewWindow,
+  formatScore,
+  humanizeSlug,
+  statusPill,
+} from "../utils/formatters";
+
+function urgencyTone(band) {
+  if (band === "critical") {
+    return {
+      card: "border-l-red-400/90 bg-[linear-gradient(135deg,rgba(147,0,10,0.12),rgba(11,19,38,0.96))]",
+      badge: "badge-error",
+      label: "Critical",
+    };
+  }
+  if (band === "warning") {
+    return {
+      card: "border-l-amber-400/90 bg-[linear-gradient(135deg,rgba(180,120,0,0.10),rgba(11,19,38,0.96))]",
+      badge: "badge-pending",
+      label: "Watch",
+    };
+  }
+  return {
+    card: "border-l-primary/70 bg-surface-container-low/90",
+    badge: "badge-active",
+    label: "Steady",
+  };
+}
+
+function confidenceTone(band) {
+  if (band === "high") {
+    return "badge-active";
+  }
+  if (band === "moderate") {
+    return "badge-guarded";
+  }
+  return "badge-pending";
+}
 
 export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
   const incidents = groupClaimsByIncident(claims, { bucketMinutes: 90 });
@@ -21,11 +61,20 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
       <div className="space-y-3">
         {hasActiveQueue ? (
           incidents.map((incident) => (
-            <div key={incident.id} className="group context-panel rounded-[24px] p-4">
+            <div
+              key={incident.id}
+              className={clsx(
+                "rounded-[24px] border border-primary/10 border-l-4 p-4 shadow-[0_18px_40px_rgba(7,10,20,0.28)] transition-smooth",
+                urgencyTone(incident.urgency_band).card,
+              )}
+            >
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
                     <span className={statusPill(incident.status)}>{humanizeSlug(incident.status)}</span>
+                    <span className={clsx("pill", urgencyTone(incident.urgency_band).badge)}>
+                      {urgencyTone(incident.urgency_band).label} queue
+                    </span>
                     <p className="text-sm font-semibold text-primary">{incident.worker_name}</p>
                   </div>
                   <p className="mt-2 text-sm text-on-surface-variant">
@@ -39,12 +88,16 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                 </div>
 
                 <div className="text-right text-sm">
-                  <p className="font-semibold text-primary">{formatCurrency(incident.total_calculated_payout)}</p>
-                  <p className="mt-1 text-on-surface-variant">{formatRelative(incident.review_deadline)}</p>
+                  <p className="font-semibold text-primary">{formatCurrency(incident.payout_risk || incident.total_calculated_payout)}</p>
+                  <p className="mt-1 text-on-surface-variant">{formatReviewWindow(incident.hours_until_deadline)}</p>
                 </div>
               </div>
 
-              <div className="mb-4 grid gap-3 text-sm sm:grid-cols-3">
+              <div className="mb-4 grid gap-3 text-sm sm:grid-cols-4">
+                <div>
+                  <p className="text-on-surface-variant">Wait time</p>
+                  <p className="mt-2 font-semibold text-primary">{formatHours(incident.hours_waiting)}</p>
+                </div>
                 <div>
                   <p className="text-on-surface-variant">Fraud score</p>
                   <p className="mt-2 font-semibold text-primary">{formatScore(incident.max_fraud_score)}</p>
@@ -54,8 +107,13 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                   <p className="mt-2 font-semibold text-primary">{formatScore(incident.avg_final_score)}</p>
                 </div>
                 <div>
-                  <p className="text-on-surface-variant">Overdue</p>
-                  <p className="mt-2 font-semibold text-primary">{incident.overdue_count ? "Yes" : "No"}</p>
+                  <p className="text-on-surface-variant">Confidence</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className={clsx("pill", confidenceTone(incident.decision_confidence_band))}>
+                      {humanizeSlug(incident.decision_confidence_band)}
+                    </span>
+                    <span className="font-semibold text-primary">{formatScore(incident.max_decision_confidence)}</span>
+                  </div>
                 </div>
               </div>
 
@@ -69,6 +127,20 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                       ? "--"
                       : `${Math.round(Number(incident.max_fraud_probability || 0) * 100)}%`}
                   </span>
+                  <span>Priority {incident.priority_reason || "Review queue"}</span>
+                </div>
+                <div className="mt-3 rounded-[16px] border border-primary/8 bg-surface-container-low/90 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-on-surface-variant">Primary driver</p>
+                  <p className="mt-2 text-sm font-semibold text-primary">{incident.primary_factor || "Signal alignment requires review."}</p>
+                  {incident.secondary_factors?.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {incident.secondary_factors.map((factor) => (
+                        <span key={factor} className="pill-subtle">
+                          {factor}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {incident.top_factors?.length ? (
@@ -92,7 +164,7 @@ export default function ReviewQueue({ claims = [], resolvingId, onResolve }) {
                   ))}
                 </div>
 
-                <div className="flex flex-wrap gap-3 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+                <div className="flex flex-wrap gap-3">
                   {incident.claims.map((claim) => (
                     <div key={claim.id} className="flex flex-wrap gap-3">
                       <button

@@ -1,4 +1,16 @@
-import { formatCurrency, humanizeSlug, statusPill } from "../utils/formatters";
+import clsx from "clsx";
+
+import { formatCurrency, formatReviewWindow, formatScore, humanizeSlug, statusPill } from "../utils/formatters";
+
+function confidenceTone(band) {
+  if (band === "high") {
+    return "badge-active";
+  }
+  if (band === "moderate") {
+    return "badge-guarded";
+  }
+  return "badge-pending";
+}
 
 /**
  * Admin-facing next-decision panel — surfaces the top grouped incident
@@ -42,7 +54,12 @@ export default function NextDecisionPanel({ incident }) {
           <p className="eyebrow">Next decision</p>
           <h3 className="mt-3 text-2xl font-bold text-primary">{incident.worker_name}</h3>
         </div>
-        <span className={statusPill(incident.status)}>{humanizeSlug(incident.status)}</span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className={statusPill(incident.status)}>{humanizeSlug(incident.status)}</span>
+          <span className={clsx("pill", confidenceTone(incident.decision_confidence_band))}>
+            Confidence {humanizeSlug(incident.decision_confidence_band)}
+          </span>
+        </div>
       </div>
 
       <p className="mt-4 text-sm leading-7 text-on-surface-variant">
@@ -50,17 +67,26 @@ export default function NextDecisionPanel({ incident }) {
         {humanizeSlug(incident.zone || "zone")}
       </p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
         <div className="rounded-[20px] border border-primary/10 bg-surface-container-high/75 p-4">
-          <p className="text-sm text-on-surface-variant">Fraud score</p>
-          <p className="mt-2 text-2xl font-bold text-primary">
-            {Math.round(Number(incident.max_fraud_score || 0) * 100)}%
+          <p className="text-sm text-on-surface-variant">Decision confidence</p>
+          <p className="mt-2 text-2xl font-bold text-primary">{formatScore(incident.max_decision_confidence)}</p>
+          <p className="mt-2 text-xs text-on-surface-variant">
+            Signal confidence is {humanizeSlug(incident.decision_confidence_band)} for this review recommendation.
           </p>
         </div>
         <div className="rounded-[20px] border border-primary/10 bg-surface-container-high/75 p-4">
           <p className="text-sm text-on-surface-variant">Payout at risk</p>
           <p className="mt-2 text-2xl font-bold text-primary">
-            {formatCurrency(incident.total_calculated_payout)}
+            {formatCurrency(incident.payout_risk || incident.total_calculated_payout)}
+          </p>
+          <p className="mt-2 text-xs text-on-surface-variant">Gross payout {formatCurrency(incident.total_calculated_payout)}</p>
+        </div>
+        <div className="rounded-[20px] border border-primary/10 bg-surface-container-high/75 p-4">
+          <p className="text-sm text-on-surface-variant">Wait window</p>
+          <p className="mt-2 text-2xl font-bold text-primary">{formatReviewWindow(incident.hours_until_deadline)}</p>
+          <p className="mt-2 text-xs text-on-surface-variant">
+            Queue has already held this incident for the highest-pressure claim in the group.
           </p>
         </div>
       </div>
@@ -74,26 +100,35 @@ export default function NextDecisionPanel({ incident }) {
           </p>
         </div>
         <div className="rounded-[18px] border border-primary/10 bg-surface-container-low p-4">
-          <p className="text-sm text-on-surface-variant">Top suspicious factors</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {topFactors.length ? (
-              topFactors.map((factor) => (
+          <p className="text-sm text-on-surface-variant">Primary review driver</p>
+          <p className="mt-2 text-lg font-semibold text-primary">{incident.primary_factor || "No dominant driver surfaced."}</p>
+          {incident.secondary_factors?.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {incident.secondary_factors.map((factor) => (
+                <span key={factor} className="pill-subtle">
+                  {factor}
+                </span>
+              ))}
+            </div>
+          ) : topFactors.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {topFactors.map((factor) => (
                 <span key={factor.factor} className="pill-neutral">
                   {factor.label}
                 </span>
-              ))
-            ) : (
-              <span className="text-sm text-on-surface-variant">No ML factors available.</span>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <span className="mt-2 inline-flex text-sm text-on-surface-variant">No ML factors available.</span>
+          )}
         </div>
       </div>
 
       <div className="mt-5 rounded-[20px] border border-primary/10 bg-primary/5 p-4">
         <p className="text-sm font-semibold text-primary">Why this is surfaced first</p>
         <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-          This grouped incident is already delayed and should be resolved before the passive logs below. Operational
-          review should start here, not in the feed history.
+          {incident.priority_reason || "This grouped incident has the strongest current review pressure."} Resolve the
+          manual decision here before working through passive logs and forecast context below.
         </p>
       </div>
     </div>

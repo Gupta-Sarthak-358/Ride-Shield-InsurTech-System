@@ -35,6 +35,19 @@ class ClaimResponse(BaseModel):
     reviewed_by: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     created_at: datetime
+    is_overdue: Optional[bool] = None
+    fraud_probability: Optional[float] = None
+    payout_risk: Optional[float] = None
+    hours_waiting: Optional[float] = None
+    hours_until_deadline: Optional[float] = None
+    overdue_hours: Optional[float] = None
+    urgency_score: Optional[float] = None
+    urgency_band: Optional[str] = None
+    priority_reason: Optional[str] = None
+    decision_confidence: Optional[float] = None
+    decision_confidence_band: Optional[str] = None
+    primary_factor: Optional[str] = None
+    secondary_factors: Optional[List[str]] = None
     payout_info: Optional[Dict[str, Any]] = None
 
 

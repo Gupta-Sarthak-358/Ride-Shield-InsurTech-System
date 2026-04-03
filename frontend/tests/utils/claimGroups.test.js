@@ -110,6 +110,75 @@ describe("groupClaimsByIncident", () => {
     expect(new Date(groups[0].created_at) > new Date(groups[1].created_at)).toBe(true);
   });
 
+  it("keeps the strongest urgency context for the grouped incident", () => {
+    const claims = [
+      baseClaim({
+        id: "c1",
+        urgency_score: 0.42,
+        urgency_band: "warning",
+        priority_reason: "SLA breach risk",
+        decision_confidence: 0.61,
+        decision_confidence_band: "moderate",
+        payout_risk: 48,
+        primary_factor: "movement anomaly",
+        secondary_factors: ["weak pre-event activity"],
+      }),
+      baseClaim({
+        id: "c2",
+        urgency_score: 0.81,
+        urgency_band: "critical",
+        priority_reason: "High payout exposure",
+        decision_confidence: 0.74,
+        decision_confidence_band: "moderate",
+        payout_risk: 92,
+        primary_factor: "worker trust score",
+        secondary_factors: ["movement anomaly"],
+      }),
+    ];
+
+    const groups = groupClaimsByIncident(claims);
+
+    expect(groups[0].max_urgency_score).toBe(0.81);
+    expect(groups[0].urgency_band).toBe("critical");
+    expect(groups[0].priority_reason).toBe("High payout exposure");
+    expect(groups[0].payout_risk).toBe(140);
+    expect(groups[0].primary_factor).toBe("worker trust score");
+  });
+
+  it("sorts overdue and higher-urgency incidents first", () => {
+    const claims = [
+      baseClaim({
+        id: "c1",
+        worker_id: "w1",
+        created_at: "2026-04-02T12:00:00Z",
+        urgency_score: 0.4,
+        urgency_band: "warning",
+        hours_until_deadline: 8,
+      }),
+      baseClaim({
+        id: "c2",
+        worker_id: "w2",
+        created_at: "2026-04-02T10:00:00Z",
+        urgency_score: 0.78,
+        urgency_band: "critical",
+        is_overdue: true,
+        hours_until_deadline: -2,
+      }),
+      baseClaim({
+        id: "c3",
+        worker_id: "w3",
+        created_at: "2026-04-02T13:00:00Z",
+        urgency_score: 0.72,
+        urgency_band: "critical",
+        hours_until_deadline: 2,
+      }),
+    ];
+
+    const groups = groupClaimsByIncident(claims);
+
+    expect(groups.map((group) => group.worker_id)).toEqual(["w2", "w3", "w1"]);
+  });
+
   it("handles empty input", () => {
     expect(groupClaimsByIncident([])).toHaveLength(0);
   });

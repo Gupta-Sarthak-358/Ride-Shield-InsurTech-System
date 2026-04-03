@@ -56,6 +56,38 @@ export function formatDateTime(value) {
   return format(date, "dd MMM yyyy, h:mm a");
 }
 
+export function formatHours(value) {
+  if (value === null || value === undefined) {
+    return "--";
+  }
+  const numeric = Number(value);
+  if (Number.isNaN(numeric)) {
+    return "--";
+  }
+  const absolute = Math.abs(numeric);
+  if (absolute < 1) {
+    return "<1h";
+  }
+  return `${Math.round(absolute)}h`;
+}
+
+export function formatReviewWindow(hoursUntilDeadline) {
+  if (hoursUntilDeadline === null || hoursUntilDeadline === undefined) {
+    return "--";
+  }
+  const numeric = Number(hoursUntilDeadline);
+  if (Number.isNaN(numeric)) {
+    return "--";
+  }
+  if (numeric < 0) {
+    return `Overdue by ${formatHours(Math.abs(numeric))}`;
+  }
+  if (numeric === 0) {
+    return "Due now";
+  }
+  return `Due in ${formatHours(numeric)}`;
+}
+
 export function humanizeSlug(value = "") {
   return String(value ?? "")
     .split("_")

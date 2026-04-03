@@ -33,6 +33,14 @@ function buildActivityLog(latestResult, city) {
   ];
 }
 
+function parseActivityLine(line) {
+  const [prefix, ...rest] = line.split(": ");
+  if (!rest.length) {
+    return { prefix: "LOG", message: line };
+  }
+  return { prefix, message: rest.join(": ") };
+}
+
 const causalitySteps = [
   { icon: Radar, label: "Signal ingest", text: "Threshold cross" },
   { icon: ShieldAlert, label: "Validation", text: "Incident created" },
@@ -276,27 +284,36 @@ export default function DemoRunner() {
               <span className="text-[11px] font-mono text-on-surface-variant">Stream active</span>
             </div>
             <div className="max-h-72 space-y-3 overflow-y-auto text-sm">
-              {activityLog.map((line, index) => (
-                <div
-                  key={`${line}-${index}`}
-                  className={`flex gap-3 rounded-[18px] border px-3 py-3 ${
-                    index === activityLog.length - 1
-                      ? "border-primary/35 bg-primary/10 shadow-[inset_0_1px_0_rgba(105,248,233,0.08)]"
-                      : "border-outline-variant/35 bg-surface-container"
-                  }`}
-                >
-                  <span className="shrink-0 font-mono text-[11px] text-on-surface-variant">
-                    {new Date(Date.now() - (activityLog.length - 1 - index) * 3000).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </span>
-                  <p className={`font-mono leading-6 ${index === activityLog.length - 1 ? "text-on-surface" : "text-on-surface-variant"}`}>
-                    {line}
-                  </p>
-                </div>
-              ))}
+              {activityLog.map((line, index) => {
+                const parsed = parseActivityLine(line);
+
+                return (
+                  <div
+                    key={`${line}-${index}`}
+                    className={`rounded-[18px] border px-4 py-3 ${
+                      index === activityLog.length - 1
+                        ? "border-primary/25 bg-surface-container-high shadow-[inset_0_1px_0_rgba(105,248,233,0.08)]"
+                        : "border-outline-variant/35 bg-surface-container-low/90"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="shrink-0 font-mono text-[11px] text-on-surface-variant">
+                        {new Date(Date.now() - (activityLog.length - 1 - index) * 3000).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="inline-flex rounded-full bg-surface-container-highest px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+                          {parsed.prefix}
+                        </span>
+                        <p className="mt-2 font-mono leading-6 text-on-surface">{parsed.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -332,7 +349,13 @@ export default function DemoRunner() {
                 <div key={snapshot.zone} className="rounded-[22px] p-4 panel-quiet">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold text-primary">{humanizeSlug(snapshot.zone)}</p>
-                    <span className={snapshot.triggers_active.length ? "pill-neutral" : "pill-subtle"}>
+                    <span
+                      className={
+                        snapshot.triggers_active.length
+                          ? "pill-neutral"
+                          : "inline-flex items-center rounded-full border border-tertiary/25 bg-tertiary-container/45 px-3 py-1 text-xs font-semibold text-tertiary-fixed"
+                      }
+                    >
                       {snapshot.triggers_active.length} triggers
                     </span>
                   </div>

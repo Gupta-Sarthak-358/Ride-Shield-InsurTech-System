@@ -46,6 +46,35 @@ function forecastTone(band) {
   }
 }
 
+function queuePressureState(totalPending, overdueCount, exposure) {
+  if (!totalPending) {
+    return {
+      label: "Calm",
+      tone: "badge-active",
+      summary: "No delayed incidents are blocking the operator right now.",
+    };
+  }
+  if (overdueCount > 0 || exposure >= 400 || totalPending >= 6) {
+    return {
+      label: "Critical load",
+      tone: "badge-error",
+      summary: "Oldest and highest-exposure incidents should be cleared before passive monitoring.",
+    };
+  }
+  if (exposure >= 180 || totalPending >= 3) {
+    return {
+      label: "Managed review",
+      tone: "badge-pending",
+      summary: "Backlog exists, but the review queue is still inside an expected operating band.",
+    };
+  }
+  return {
+    label: "Controlled",
+    tone: "badge-guarded",
+    summary: "Only a small number of delayed incidents need intervention.",
+  };
+}
+
 export default function AdminPanel() {
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedZone, setSelectedZone] = useState("all");
@@ -150,6 +179,40 @@ export default function AdminPanel() {
     : scheduler?.enabled
       ? "Scheduler heartbeat healthy"
       : "Scheduler paused";
+  const queueExposure = filteredQueueIncidents.reduce(
+    (total, incident) => total + Number(incident.payout_risk || incident.total_calculated_payout || 0),
+    0,
+  );
+  const queueOverdueCount = filteredQueueIncidents.reduce(
+    (total, incident) => total + Number(incident.overdue_count || 0),
+    0,
+  );
+  const queuePressure = queuePressureState(filteredQueueIncidents.length, queueOverdueCount, queueExposure);
+  const topSystemDrivers = useMemo(() => {
+    const counts = new Map();
+    for (const incident of filteredQueueIncidents) {
+      const seen = new Set();
+      if (incident.primary_factor) {
+        seen.add(incident.primary_factor);
+      }
+      for (const factor of incident.top_factors || []) {
+        if (factor?.label) {
+          seen.add(factor.label);
+        }
+      }
+      for (const label of seen) {
+        counts.set(label, (counts.get(label) || 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([label, count]) => ({
+        label,
+        count,
+        share: filteredQueueIncidents.length ? Math.round((count / filteredQueueIncidents.length) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [filteredQueueIncidents]);
 
   if (loading) {
     return <div className="panel p-8 text-center text-on-surface-variant">Loading admin panel...</div>;
@@ -200,141 +263,120 @@ export default function AdminPanel() {
         </div>
       </section>
 
-      {/* KPI row — bento-grid with 6-tile layout */}
-      <div className="bento-grid">
-        <div className="bento-1-4">
-          <KpiTile label="Claims" value={claimStats?.total_claims ?? 0} hint={`Approval ${formatPercent(claimStats?.approval_rate)}`} />
+      <section className="space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow">Critical actions</p>
+            <h2 className="mt-2 text-3xl font-bold text-primary">Act now</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-on-surface-variant">
+              Manual review incidents and the next recommended resolution sit above everything else so the operator can
+              clear blockers before scanning passive telemetry.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className={`pill ${queuePressure.tone}`}>{queuePressure.label}</span>
+            <span className="pill-subtle">{filteredQueueIncidents.length} incidents</span>
+            <span className="pill-subtle">{queueOverdueCount} overdue</span>
+          </div>
         </div>
-        <div className="bento-1-4">
-          <KpiTile label="Approval" value={formatPercent(claimStats?.approval_rate)} hint={`Delayed ${formatPercent(claimStats?.delayed_rate)}`} />
-        </div>
-        <div className="bento-1-4">
-          <KpiTile label="Delayed" value={claimStats?.delayed ?? 0} hint={`${queue?.overdue_count ?? 0} overdue`} />
-        </div>
-        <div className="bento-1-4">
-          <KpiTile label="Fraud rate" value={formatPercent(claimStats?.fraud_rate)} hint="Detection window" />
-        </div>
-        <div className="bento-1-4">
-          <KpiTile label="Payout vol." value={formatCurrency(payoutStats?.total_amount)} hint={`${payoutStats?.total_payouts ?? 0} transfers`} />
-        </div>
-        <div className="bento-1-4">
-          <KpiTile label="Health" value={healthValue} hint={healthHint} accent="dark" />
-        </div>
-      </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.22fr_0.78fr]">
-        <section className="space-y-6">
-          <div className="grid items-start gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-            <ReviewQueue claims={filteredQueueClaims} resolvingId={resolvingId} onResolve={handleResolve} />
-            <div className="space-y-6">
-              <NextDecisionPanel incident={topIncident} />
+        <div className="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
+          <ReviewQueue claims={filteredQueueClaims} resolvingId={resolvingId} onResolve={handleResolve} />
 
-              <div className="context-panel p-6">
-                <div className="mb-4 flex items-center gap-3">
-                  <Clock3 size={18} className="text-primary" />
-                  <h3 className="text-lg font-bold text-primary">System Scheduler</h3>
+          <div className="space-y-6">
+            <NextDecisionPanel incident={topIncident} />
+
+            <div className="panel-muted p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow">Queue pressure</p>
+                  <h3 className="mt-2 text-xl font-bold text-primary">Backlog posture</h3>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[20px] bg-surface-container-low/80 p-4 border border-primary/10">
-                    <p className="text-sm text-on-surface-variant">Status</p>
-                    <p className="mt-2 text-lg font-semibold text-primary">
-                      {analytics?.scheduler?.enabled ? "Monitoring" : "Disabled"}
-                    </p>
-                  </div>
-                  <div className="rounded-[20px] bg-surface-container-low/80 p-4 border border-primary/10">
-                    <p className="text-sm text-on-surface-variant">Last run</p>
-                    <p className="mt-2 text-lg font-semibold text-primary">
-                      {analytics?.scheduler?.last_finished_at ? formatRelative(analytics.scheduler.last_finished_at) : "--"}
-                    </p>
-                  </div>
-                  <div className="rounded-[20px] bg-surface-container-low/80 p-4 border border-primary/10">
-                    <p className="text-sm text-on-surface-variant">Next run</p>
-                    <p className="mt-2 text-lg font-semibold text-primary">
-                      {analytics?.scheduler?.next_scheduled_at ? formatRelative(analytics.scheduler.next_scheduled_at) : "--"}
-                    </p>
-                  </div>
-                  <div className="rounded-[20px] bg-surface-container-low/80 p-4 border border-primary/10">
-                    <p className="text-sm text-on-surface-variant">Interval</p>
-                    <p className="mt-2 text-lg font-semibold text-primary">{analytics?.scheduler?.interval_seconds || "--"}s</p>
-                  </div>
+                <span className={`pill ${queuePressure.tone}`}>{queuePressure.label}</span>
+              </div>
+              <p className="text-sm leading-7 text-on-surface-variant">{queuePressure.summary}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                  <p className="text-sm text-on-surface-variant">Pending</p>
+                  <p className="mt-2 text-2xl font-bold text-primary">{filteredQueueIncidents.length}</p>
+                </div>
+                <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                  <p className="text-sm text-on-surface-variant">Overdue</p>
+                  <p className="mt-2 text-2xl font-bold text-primary">{queueOverdueCount}</p>
+                </div>
+                <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                  <p className="text-sm text-on-surface-variant">Exposure</p>
+                  <p className="mt-2 text-2xl font-bold text-primary">{formatCurrency(queueExposure)}</p>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
-            <div className="passive-panel card-passive p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <ShieldAlert size={18} className="text-primary" />
-                <h3 className="text-lg font-bold text-primary">Integrity preview</h3>
-              </div>
-              <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
-                {integrityPreview.length ? (
-                  integrityPreview.map((entry) => (
-                    <div key={entry.id} className="rounded-[18px] border border-primary/8 bg-surface-container-low px-3 py-3">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-on-surface-variant">
-                        {entry.action === "duplicate_detected" ? "Duplicate block" : "Extension auth"} - {formatRelative(entry.created_at)}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                        Zone {humanizeSlug(entry.details?.zone || "system")} -{" "}
-                        {(entry.details?.incident_triggers || entry.details?.fired_triggers || [])
-                          .map(humanizeSlug)
-                          .join(", ") || "No trigger list"}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-on-surface-variant">No recent duplicate or extension activity.</p>
-                )}
-              </div>
-            </div>
+      <section className="space-y-6">
+        <div>
+          <p className="eyebrow">System health</p>
+          <h2 className="mt-2 text-3xl font-bold text-primary">Know the posture</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-on-surface-variant">
+            KPI movement, scheduler heartbeat, and model explainability sit together so platform health reads as one
+            operational layer instead of scattered tiles.
+          </p>
+        </div>
 
-            <div className="context-panel p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <AlertTriangle size={18} className="text-primary" />
-                <h3 className="text-lg font-bold text-primary">Forecast horizon</h3>
-              </div>
-              <div className="space-y-3">
-                {forecastEntries.map((entry) => {
-                  const tone = forecastTone(entry.band);
-
-                  return (
-                    <div key={entry.city} className={`rounded-[20px] border bg-surface-container-low/80 p-4 ${tone.container}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-semibold text-primary capitalize">{entry.city}</p>
-                        <span className={`pill text-xs font-bold capitalize ${tone.pill}`}>{entry.band}</span>
-                      </div>
-                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container-lowest">
-                        <div
-                          className={`h-full rounded-full transition-all ${tone.progress}`}
-                          style={{ width: `${Math.min(100, entry.projected_risk * 100)}%` }}
-                        />
-                      </div>
-                      <p className="mt-2 text-xs leading-6 text-on-surface-variant">
-                        Base {entry.base_risk.toFixed(2)} - Projected {entry.projected_risk.toFixed(2)} ({entry.active_incidents} active)
-                      </p>
-                    </div>
-                  );
-                })}
-                {!forecastEntries.length ? (
-                  <p className="text-sm text-on-surface-variant">No forecast entries match the current filters.</p>
-                ) : null}
-              </div>
-            </div>
+        <div className="bento-grid">
+          <div className="bento-1-4">
+            <KpiTile label="Claims" value={claimStats?.total_claims ?? 0} hint={`Approval ${formatPercent(claimStats?.approval_rate)}`} />
           </div>
+          <div className="bento-1-4">
+            <KpiTile label="Approval" value={formatPercent(claimStats?.approval_rate)} hint={`Delayed ${formatPercent(claimStats?.delayed_rate)}`} />
+          </div>
+          <div className="bento-1-4">
+            <KpiTile label="Delayed" value={claimStats?.delayed ?? 0} hint={`${queue?.overdue_count ?? 0} overdue`} />
+          </div>
+          <div className="bento-1-4">
+            <KpiTile label="Fraud rate" value={formatPercent(claimStats?.fraud_rate)} hint="Detection window" />
+          </div>
+          <div className="bento-1-4">
+            <KpiTile label="Payout vol." value={formatCurrency(payoutStats?.total_amount)} hint={`${payoutStats?.total_payouts ?? 0} transfers`} />
+          </div>
+          <div className="bento-1-4">
+            <KpiTile label="Health" value={healthValue} hint={healthHint} accent="dark" />
+          </div>
+        </div>
 
-          <DisruptionMap events={visibleEvents} city={selectedCity} />
-
+        <div className="grid gap-6 xl:grid-cols-[0.95fr_0.85fr_1.2fr]">
           <div className="context-panel p-6">
             <div className="mb-4 flex items-center gap-3">
-              <AlertTriangle size={18} className="text-primary" />
-              <h3 className="text-lg font-bold text-primary">72h-7d Forecast cards</h3>
+              <Clock3 size={18} className="text-primary" />
+              <h3 className="text-lg font-bold text-primary">System Scheduler</h3>
             </div>
-            <ForecastCards city={selectedCity === "all" ? "delhi" : selectedCity} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                <p className="text-sm text-on-surface-variant">Status</p>
+                <p className="mt-2 text-lg font-semibold text-primary">
+                  {analytics?.scheduler?.enabled ? "Monitoring" : "Disabled"}
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                <p className="text-sm text-on-surface-variant">Last run</p>
+                <p className="mt-2 text-lg font-semibold text-primary">
+                  {analytics?.scheduler?.last_finished_at ? formatRelative(analytics.scheduler.last_finished_at) : "--"}
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                <p className="text-sm text-on-surface-variant">Next run</p>
+                <p className="mt-2 text-lg font-semibold text-primary">
+                  {analytics?.scheduler?.next_scheduled_at ? formatRelative(analytics.scheduler.next_scheduled_at) : "--"}
+                </p>
+              </div>
+              <div className="rounded-[20px] border border-primary/10 bg-surface-container-low/80 p-4">
+                <p className="text-sm text-on-surface-variant">Interval</p>
+                <p className="mt-2 text-lg font-semibold text-primary">{analytics?.scheduler?.interval_seconds || "--"}s</p>
+              </div>
+            </div>
           </div>
-        </section>
 
-        <aside className="space-y-6">
           <div className="context-panel p-6">
             <div className="mb-5">
               <p className="eyebrow">Model status</p>
@@ -344,18 +386,117 @@ export default function AdminPanel() {
 
           <div className="context-panel p-6">
             <div className="mb-5">
-              <p className="eyebrow">Operational</p>
-              <h3 className="mt-2 text-lg font-bold leading-tight text-primary">Decisions explainable under pressure.</h3>
+              <p className="eyebrow">System explainability</p>
+              <h3 className="mt-2 text-lg font-bold leading-tight text-primary">Top drivers across the live review queue</h3>
               <p className="mt-3 text-xs leading-6 text-on-surface-variant">
-                Delayed claims, duplicates, and event context stay visible for manual review instead of being buried in
-                feed history.
+                Surface the factors repeating across delayed incidents so operators can spot whether review pressure is
+                coming from trust, movement, pre-activity, or broader signal drift.
               </p>
+            </div>
+            <div className="space-y-3">
+              {topSystemDrivers.length ? (
+                topSystemDrivers.map((driver) => (
+                  <div key={driver.label} className="rounded-[18px] border border-primary/8 bg-surface-container-low/80 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-primary">{driver.label}</p>
+                      <span className="pill-subtle">{driver.share}% of queue</span>
+                    </div>
+                    <p className="mt-2 text-sm text-on-surface-variant">{driver.count} grouped incidents currently surface this driver.</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant">No review drivers are active because the queue is clear.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <div>
+          <p className="eyebrow">Context and insight</p>
+          <h2 className="mt-2 text-3xl font-bold text-primary">Scan the environment</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-on-surface-variant">
+            Feed history, integrity checks, forecast posture, and spatial context stay below the action layer so they
+            support decisions instead of competing with them.
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
+          <div className="panel-muted p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <ShieldAlert size={18} className="text-primary" />
+              <h3 className="text-lg font-bold text-primary">Integrity preview</h3>
+            </div>
+            <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
+              {integrityPreview.length ? (
+                integrityPreview.map((entry) => (
+                  <div key={entry.id} className="rounded-[18px] border border-primary/8 bg-surface-container-low px-3 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-on-surface-variant">
+                      {entry.action === "duplicate_detected" ? "Duplicate block" : "Extension auth"} - {formatRelative(entry.created_at)}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                      Zone {humanizeSlug(entry.details?.zone || "system")} -{" "}
+                      {(entry.details?.incident_triggers || entry.details?.fired_triggers || [])
+                        .map(humanizeSlug)
+                        .join(", ") || "No trigger list"}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-on-surface-variant">No recent duplicate or extension activity.</p>
+              )}
             </div>
           </div>
 
+          <div className="context-panel p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <AlertTriangle size={18} className="text-primary" />
+              <h3 className="text-lg font-bold text-primary">Forecast horizon</h3>
+            </div>
+            <div className="space-y-3">
+              {forecastEntries.map((entry) => {
+                const tone = forecastTone(entry.band);
+
+                return (
+                  <div key={entry.city} className={`rounded-[20px] border bg-surface-container-low/80 p-4 ${tone.container}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-primary capitalize">{entry.city}</p>
+                      <span className={`pill text-xs font-bold capitalize ${tone.pill}`}>{entry.band}</span>
+                    </div>
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container-lowest">
+                      <div
+                        className={`h-full rounded-full transition-all ${tone.progress}`}
+                        style={{ width: `${Math.min(100, entry.projected_risk * 100)}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs leading-6 text-on-surface-variant">
+                      Base {entry.base_risk.toFixed(2)} - Projected {entry.projected_risk.toFixed(2)} ({entry.active_incidents} active)
+                    </p>
+                  </div>
+                );
+              })}
+              {!forecastEntries.length ? (
+                <p className="text-sm text-on-surface-variant">No forecast entries match the current filters.</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <DisruptionMap events={visibleEvents} city={selectedCity} />
+
+        <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
           <EventPanel events={visibleEvents.slice(0, 4)} />
-        </aside>
-      </div>
+
+          <div className="context-panel p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <AlertTriangle size={18} className="text-primary" />
+              <h3 className="text-lg font-bold text-primary">72h-7d Forecast cards</h3>
+            </div>
+            <ForecastCards city={selectedCity === "all" ? "delhi" : selectedCity} />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

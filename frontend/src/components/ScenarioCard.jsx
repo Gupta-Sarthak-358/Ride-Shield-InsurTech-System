@@ -12,6 +12,32 @@ export default function ScenarioCard({ scenario, running, result, thresholds, on
   const zoneResult = result?.details?.[0];
   const signals = zoneResult?.signals || {};
   const firedTriggers = zoneResult?.triggers_fired || [];
+  const summaryRows = result
+    ? [
+        { label: "Incidents", value: result.events_created },
+        { label: "Claims", value: result.claims_generated },
+        { label: "Approved", value: result.claims_approved },
+        { label: "Payout", value: formatCurrency(result.total_payout || 0) },
+      ]
+    : [];
+  const detailRows = result
+    ? [
+        {
+          label: "Incident step",
+          value:
+            result.events_created > 0
+              ? "Incident created"
+              : result.events_extended > 0
+                ? "Incident extended"
+                : "No incident change",
+        },
+        { label: "Worker impact", value: `${result.claims_generated} claims processed` },
+        {
+          label: "Decision mix",
+          value: `${result.claims_approved} approved | ${result.claims_delayed} delayed | ${result.claims_rejected} rejected`,
+        },
+      ]
+    : [];
 
   return (
     <div className="group panel h-full min-h-[252px] overflow-hidden p-6 card-hover transition-smooth">
@@ -30,65 +56,45 @@ export default function ScenarioCard({ scenario, running, result, thresholds, on
       <p className="mt-3 text-sm font-medium text-on-surface-variant">{scenario.outcome}</p>
 
       {result ? (
-        <div className="mt-5 space-y-4 rounded-[24px] bg-surface-container-low p-4">
-          <div className="grid gap-3 lg:grid-cols-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Incidents</p>
-              <p className="mt-2 text-xl font-bold text-primary">{result.events_created}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Claims</p>
-              <p className="mt-2 text-xl font-bold text-primary">{result.claims_generated}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Approved</p>
-              <p className="mt-2 text-xl font-bold text-primary">{result.claims_approved}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Payout</p>
-              <p className="mt-2 text-xl font-bold text-primary">{formatCurrency(result.total_payout || 0)}</p>
-            </div>
+        <div className="mt-5 space-y-4 rounded-[24px] border border-primary/10 bg-surface-container-lowest/95 p-5 shadow-[inset_0_1px_0_rgba(105,248,233,0.05)]">
+          <div className="space-y-3">
+            {summaryRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between gap-4 rounded-[20px] border border-primary/8 bg-surface-container-high/80 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">{row.label}</p>
+                <p className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl">{row.value}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="rounded-[22px] bg-white/90 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-on-surface-variant">Cause and effect</p>
-            <div className="mt-3 space-y-2 text-sm text-on-surface-variant">
+          <div className="rounded-[22px] border border-primary/8 bg-surface-container-high/90 p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">Cause and effect</p>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-on-surface">
               <p>
                 Scenario changes the simulator inputs for the selected zone. The trigger engine then checks real
                 thresholds and decides whether an incident should be created or extended.
               </p>
               {firedTriggers.length ? (
-                <p className="font-medium text-ink">Triggers crossed: {firedTriggers.map(humanizeSlug).join(", ")}</p>
+                <p className="font-semibold text-primary">Triggers crossed: {firedTriggers.map(humanizeSlug).join(", ")}</p>
               ) : (
-                <p className="font-medium text-ink">No trigger crossed the configured threshold on this run.</p>
+                <p className="font-semibold text-primary">No trigger crossed the configured threshold on this run.</p>
               )}
-              {signals.rain !== undefined ? <p>{explainSignal("Rain", signals.rain, thresholds?.rain, " mm/hr")}</p> : null}
-              {signals.traffic !== undefined ? <p>{explainSignal("Traffic", signals.traffic, thresholds?.traffic)}</p> : null}
+              {signals.rain !== undefined ? <p className="text-on-surface-variant">{explainSignal("Rain", signals.rain, thresholds?.rain, " mm/hr")}</p> : null}
+              {signals.traffic !== undefined ? <p className="text-on-surface-variant">{explainSignal("Traffic", signals.traffic, thresholds?.traffic)}</p> : null}
               {signals.platform_outage !== undefined ? (
-                <p>{explainSignal("Platform drop", signals.platform_outage, thresholds?.platform_outage)}</p>
+                <p className="text-on-surface-variant">{explainSignal("Platform drop", signals.platform_outage, thresholds?.platform_outage)}</p>
               ) : null}
-              {signals.aqi !== undefined ? <p>{explainSignal("AQI", signals.aqi, thresholds?.aqi)}</p> : null}
-              {signals.heat !== undefined ? <p>{explainSignal("Heat", signals.heat, thresholds?.heat, " C")}</p> : null}
+              {signals.aqi !== undefined ? <p className="text-on-surface-variant">{explainSignal("AQI", signals.aqi, thresholds?.aqi)}</p> : null}
+              {signals.heat !== undefined ? <p className="text-on-surface-variant">{explainSignal("Heat", signals.heat, thresholds?.heat, " C")}</p> : null}
             </div>
           </div>
 
-          <div className="grid gap-3 text-sm lg:grid-cols-3">
-            <div className="rounded-[22px] bg-white/90 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Incident step</p>
-              <p className="mt-2 font-semibold">
-                {result.events_created > 0 ? "Incident created" : result.events_extended > 0 ? "Incident extended" : "No incident change"}
-              </p>
-            </div>
-            <div className="rounded-[22px] bg-white/90 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Worker impact</p>
-              <p className="mt-2 font-semibold">{result.claims_generated} claims processed</p>
-            </div>
-            <div className="rounded-[22px] bg-white/90 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-on-surface-variant">Decision mix</p>
-              <p className="mt-2 font-semibold">
-                {result.claims_approved} approved | {result.claims_delayed} delayed | {result.claims_rejected} rejected
-              </p>
-            </div>
+          <div className="space-y-3 text-sm">
+            {detailRows.map((row) => (
+              <div key={row.label} className="rounded-[22px] border border-primary/8 bg-surface-container-high/80 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">{row.label}</p>
+                <p className="mt-3 font-semibold leading-6 text-on-surface">{row.value}</p>
+              </div>
+            ))}
           </div>
         </div>
       ) : null}

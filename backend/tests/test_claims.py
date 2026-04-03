@@ -131,8 +131,18 @@ async def test_review_queue_and_manual_resolution_flow(client, valid_worker_data
     assert review_queue_response.status_code == 200
     queue_data = review_queue_response.json()
     assert queue_data["total_pending"] >= 1
+    review_claim = next(claim for claim in queue_data["claims"] if claim["worker_id"] == worker_id)
+    assert "urgency_score" in review_claim
+    assert "urgency_band" in review_claim
+    assert "priority_reason" in review_claim
+    assert "payout_risk" in review_claim
+    assert "hours_waiting" in review_claim
+    assert "decision_confidence" in review_claim
+    assert "decision_confidence_band" in review_claim
+    assert review_claim["urgency_band"] in {"critical", "warning", "steady"}
+    assert review_claim["decision_confidence_band"] in {"high", "moderate", "low"}
 
-    claim_id = next(claim["id"] for claim in queue_data["claims"] if claim["worker_id"] == worker_id)
+    claim_id = review_claim["id"]
     resolve_response = await client.post(
         f"/api/claims/resolve/{claim_id}",
         json={"decision": "approve", "reason": "Manual verification passed.", "reviewed_by": "test_admin"},
