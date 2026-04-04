@@ -41,7 +41,9 @@ stitch/
 logs/runtime/*.txt
 *.egg-info/
 .eggs/
-backend/ml/artifacts/*
+# backend/ml/artifacts/* (Unignored to allow deployment)
+!backend/ml/artifacts/*.joblib
+!backend/ml/artifacts/*.json
 !backend/ml/artifacts/.gitkeep
 
 # Project-local planning docs that should not be pushed
