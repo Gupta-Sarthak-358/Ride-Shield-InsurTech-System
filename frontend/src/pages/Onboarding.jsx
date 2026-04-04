@@ -900,7 +900,7 @@ export default function Onboarding() {
                 story={PLAN_STORIES[plan.plan_name]}
                 recommendationReason={
                   plan.is_recommended
-                    ? getRecommendationReason(plan.plan_name, cityLabel)
+                    ? getRecommendationReason()
                     : ""
                 }
               />
@@ -943,7 +943,7 @@ export default function Onboarding() {
                       story={PLAN_STORIES[plan.plan_name]}
                       recommendationReason={
                         plan.is_recommended
-                          ? getRecommendationReason(plan.plan_name, cityLabel)
+                          ? getRecommendationReason()
                           : ""
                       }
                     />
