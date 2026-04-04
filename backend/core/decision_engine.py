@@ -2,9 +2,12 @@
 Decision engine for routing claims to approve, delay, or reject.
 """
 
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict
 from backend.utils.time import utc_now_naive
+
+logger = logging.getLogger(__name__)
 
 
 class DecisionEngine:
@@ -231,7 +234,7 @@ class DecisionEngine:
         low_payout_confident_approve = (
             payout_amount <= 100
             and adjusted_fraud <= 0.30
-            and trust_score >= 0.09
+            and trust_score >= 0.25
             and event_confidence >= 0.70
             and final_score >= 0.55
             and automation_confidence >= 0.60
@@ -240,7 +243,7 @@ class DecisionEngine:
         weak_signal_confident_approve = (
             flag_profile["noise_only"]
             and adjusted_fraud <= 0.24
-            and trust_score >= 0.09
+            and trust_score >= 0.25
             and event_confidence >= 0.70
             and final_score >= 0.55
             and automation_confidence >= 0.55
@@ -304,6 +307,15 @@ class DecisionEngine:
             feedback_result=feedback_result,
         )
         primary_reason = self._primary_reason(fraud_flags, trust_score, event_confidence, adjusted_fraud)
+
+        logger.info({
+            "decision": decision,
+            "fraud_score": adjusted_fraud,
+            "trust_score": trust_score,
+            "final_score": final_score,
+            "confidence": decision_confidence,
+            "reason": primary_reason
+        })
 
         return {
             "final_score": final_score,
