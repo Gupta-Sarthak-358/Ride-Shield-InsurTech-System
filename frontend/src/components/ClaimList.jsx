@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { groupClaimsByIncident } from "../utils/claimGroups";
 import { formatCurrency, formatDateTime, formatScore, humanizeSlug, statusPill } from "../utils/formatters";
 
@@ -12,8 +13,10 @@ function reasoningLine(status) {
 }
 
 export default function ClaimList({ claims = [], onSelect, compact = false }) {
+  const { t } = useTranslation();
+
   if (!claims.length) {
-    return <p className="text-sm text-on-surface-variant">No claims found for this view.</p>;
+    return <p className="text-sm text-on-surface-variant">{t("dashboard.historyList.empty")}</p>;
   }
 
   const incidents = groupClaimsByIncident(claims, { bucketMinutes: 90 });
@@ -21,12 +24,12 @@ export default function ClaimList({ claims = [], onSelect, compact = false }) {
   return (
     <div className="overflow-hidden rounded-[24px] border border-outline-variant/60">
       <div className="hidden grid-cols-[1.4fr_1fr_1fr_0.9fr_0.9fr_0.8fr] gap-3 bg-surface-container-low px-4 py-4 text-[11px] font-bold uppercase tracking-[0.22em] text-on-surface-variant md:grid">
-        <span>Incident</span>
-        <span>Zone</span>
-        <span>Triggers</span>
-        <span>Status</span>
-        <span>Amount</span>
-        <span>Score</span>
+        <span>{t("dashboard.historyList.incident")}</span>
+        <span>{t("dashboard.historyList.zone")}</span>
+        <span>{t("dashboard.historyList.triggers")}</span>
+        <span>{t("dashboard.historyList.status")}</span>
+        <span>{t("dashboard.historyList.amount")}</span>
+        <span>{t("dashboard.historyList.score")}</span>
       </div>
       <div className="divide-y divide-outline-variant/40">
         {incidents.map((incident) => (
@@ -41,12 +44,12 @@ export default function ClaimList({ claims = [], onSelect, compact = false }) {
                 {compact
                   ? incident.worker_name || incident.worker_id
                   : incident.claim_count > 1
-                    ? `${incident.claim_count} linked claims`
-                    : `Claim ${incident.claims[0].id.slice(0, 8)}`}
+                    ? `${incident.claim_count} ${t("dashboard.historyList.linked_claims")}`
+                    : `${t("dashboard.decisionPanel.claim")} ${incident.claims[0].id.slice(0, 8)}`}
               </p>
               <p className="mt-1 text-sm text-on-surface-variant">
                 {formatDateTime(incident.created_at)}
-                {incident.claim_count > 1 ? " - grouped into one disruption incident" : ""}
+                {incident.claim_count > 1 ? " - " + t("dashboard.historyList.grouped") : ""}
               </p>
               <p className="mt-2 text-sm leading-6 text-on-surface-variant md:hidden">{reasoningLine(incident.status)}</p>
             </div>

@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next";
 import { formatDateTime, formatPercent, humanizeSlug, statusPill } from "../utils/formatters";
 
 export default function EventPanel({ events = [] }) {
+  const { t } = useTranslation();
+
   return (
     <div className="panel p-6">
       <div className="mb-5">
-        <p className="eyebrow">Live disruption feed</p>
-        <h3 className="mt-2 text-2xl font-bold text-primary">Active incidents</h3>
+        <p className="eyebrow">{t("dashboard.disruptionFeed.eyebrow")}</p>
+        <h3 className="mt-2 text-2xl font-bold text-primary">{t("dashboard.disruptionFeed.title")}</h3>
         <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-          RideShield watches signal clusters in the background, merges overlapping triggers into one incident, and turns
-          that incident into an explainable claim path.
+          {t("dashboard.disruptionFeed.desc")}
         </p>
       </div>
 
@@ -30,8 +32,7 @@ export default function EventPanel({ events = [] }) {
                       {humanizeSlug(event.zone)} | {humanizeSlug(event.city)}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                      Threshold breaches in the same zone and time window were merged into one incident so the worker
-                      experiences one coherent claim story instead of duplicate event noise.
+                      {t("dashboard.disruptionFeed.merge_note")}
                     </p>
                   </div>
 
@@ -50,7 +51,7 @@ export default function EventPanel({ events = [] }) {
             );
           })
         ) : (
-          <p className="text-sm text-on-surface-variant">No active disruptions right now.</p>
+          <p className="text-sm text-on-surface-variant">{t("dashboard.disruptionFeed.empty")}</p>
         )}
       </div>
     </div>

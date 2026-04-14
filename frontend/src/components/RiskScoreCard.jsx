@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, TrendingUp } from "lucide-react";
 
@@ -5,6 +6,8 @@ import { workersApi } from "../api/workers";
 import { humanizeSlug } from "../utils/formatters";
 
 export default function RiskScoreCard({ workerId }) {
+  const { t } = useTranslation();
+
   const [riskData, setRiskData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,8 +63,8 @@ export default function RiskScoreCard({ workerId }) {
   if (loading) {
     return (
       <div className="panel p-6">
-        <p className="eyebrow">Coverage outlook</p>
-        <p className="mt-4 text-sm text-on-surface-variant">Loading...</p>
+        <p className="eyebrow">{t("dashboard.coverageOutlook.eyebrow")}</p>
+        <p className="mt-4 text-sm text-on-surface-variant">{t("dashboard.coverageOutlook.loading")}</p>
       </div>
     );
   }
@@ -69,8 +72,8 @@ export default function RiskScoreCard({ workerId }) {
   if (error || !riskData) {
     return (
       <div className="panel p-6">
-        <p className="eyebrow">Coverage outlook</p>
-        <p className="mt-4 text-sm text-on-surface-variant">{error || "No risk data available"}</p>
+        <p className="eyebrow">{t("dashboard.coverageOutlook.eyebrow")}</p>
+        <p className="mt-4 text-sm text-on-surface-variant">{error || t("dashboard.coverageOutlook.no_risk_data")}</p>
       </div>
     );
   }
@@ -91,15 +94,15 @@ export default function RiskScoreCard({ workerId }) {
         : "card-primary border-accent-left border-accent-success";
   const explanation =
     breakdown.explanation ||
-    "Coverage outlook is based on location, disruption pressure, and incident context in the worker's operating zone.";
+    t("dashboard.coverageOutlook.why_matters");
 
   return (
     <div className={`panel p-6 ${authorityClass}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="eyebrow">Coverage outlook</p>
+          <p className="eyebrow">{t("dashboard.coverageOutlook.eyebrow")}</p>
           <p className="mt-4 text-5xl font-extrabold leading-none text-primary">{scorePercent}%</p>
-          <p className="mt-2 text-sm font-medium text-on-surface-variant">Current disruption outlook</p>
+          <p className="mt-2 text-sm font-medium text-on-surface-variant">{t("dashboard.coverageOutlook.subtitle")}</p>
         </div>
         <span className="pill" style={riskColor.style}>
           <span className={`mr-2 inline-block h-2 w-2 rounded-full ${riskColor.dot}`} />
@@ -108,13 +111,13 @@ export default function RiskScoreCard({ workerId }) {
       </div>
 
       <div className="mt-5 panel-quiet rounded-[24px] p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">Why this matters now</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">{t("dashboard.coverageOutlook.why_matters")}</p>
         <p className="mt-3 text-sm leading-6 text-on-surface">{explanation}</p>
       </div>
 
       {topFactors.length ? (
         <div className="mt-5 space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">Main signals</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-on-surface-variant">{t("dashboard.coverageOutlook.main_signals")}</p>
           <div className="space-y-2">
             {topFactors.slice(0, 3).map((factor) => (
               <div key={factor.id} className="flex items-center justify-between gap-4 rounded-[16px] bg-surface-container-low p-3 text-sm">
@@ -133,7 +136,7 @@ export default function RiskScoreCard({ workerId }) {
       ) : (
         <div className="mt-5 flex items-start gap-2 rounded-[16px] bg-surface-container-low p-3 text-xs leading-5 text-on-surface-variant">
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>Detailed signal contributions are not available for this view yet.</span>
+          <span>{t("dashboard.coverageOutlook.empty_signals")}</span>
         </div>
       )}
       <div className="mt-5 flex items-center gap-2 rounded-[16px] bg-surface-container-low p-3">

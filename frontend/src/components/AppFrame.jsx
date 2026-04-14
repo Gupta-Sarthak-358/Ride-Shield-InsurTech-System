@@ -31,14 +31,10 @@ export default function AppFrame({ children }) {
     }
 
     if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleEscape);
-    } else {
-      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleEscape);
     };
   }, [isMobileMenuOpen]);
@@ -212,8 +208,7 @@ export default function AppFrame({ children }) {
               <Siren size={18} />
               {t("appFrame.alert")}
             </button>
-            <div className="flex items-center justify-between gap-4 pt-1 border-t border-white/10">
-              <NotificationBell />
+            <div className="flex items-center justify-end gap-4 pt-1 border-t border-white/10 w-full">
               {role !== "admin" && (
                 <button
                   type="button"
@@ -226,6 +221,41 @@ export default function AppFrame({ children }) {
                   {t("general.lang_toggle")}
                 </button>
               )}
+              <NotificationBell />
+            </div>
+
+            {/* User Info & Settings */}
+            <div className="flex items-center gap-3 rounded-2xl bg-surface-container-low p-3 shadow-sm ring-1 ring-white/5 mt-2">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-xs font-bold text-primary shadow-inner">
+                {initials}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="truncate text-sm font-semibold text-primary">{userLabel}</p>
+                <p className="truncate text-xs text-on-surface-variant">{role === "admin" ? "Operational session" : t("appFrame.protected_worker_session")}</p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => { toast(t("appFrame.settings_toast"), { icon: "⚙️" }); setIsMobileMenuOpen(false); }} 
+                className="rounded-full p-2.5 text-on-surface-variant hover:bg-surface-container-high transition"
+                aria-label="Settings"
+              >
+                <Settings size={20} />
+              </button>
+            </div>
+
+            {/* Logout (Crucial Exit Path) */}
+            <div className="pt-2 border-t border-error/20">
+              <button 
+                type="button" 
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-error/10 px-4 py-3.5 text-sm font-bold text-error transition hover:bg-error/20 ring-1 ring-error/20 shadow-sm" 
+                onClick={() => { 
+                  setIsMobileMenuOpen(false);
+                  handleLogout(); 
+                }}
+              >
+                <LogOut size={18} />
+                {t("appFrame.sign_out")}
+              </button>
             </div>
           </div>
         </header>

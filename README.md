@@ -22,6 +22,20 @@ The deployed version is a production-optimized build with identical core logic.
 
 ---
 
+## 📱 Mobile App (Android)
+
+RideShield is also available as a mobile-ready experience via an Android APK wrapper.
+
+👉 **Download APK:** [RideShield Releases](https://github.com/Gupta-Sarthak-358/Ride-Shield-InsurTech-System/releases)
+
+- Lightweight wrapper over the web platform
+- Uses the same backend and real-time decision engine
+- Optimized for gig workers who primarily operate on mobile devices
+
+> Note: The mobile app may require an initial load to warm up the WebView, after which it runs in better manner.
+
+---
+
 ## ✅ Requirement Coverage
 
 | Requirement | Status |

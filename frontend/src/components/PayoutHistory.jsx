@@ -1,6 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { formatCurrency, formatDateTime, humanizeSlug, statusPill } from "../utils/formatters";
 
 export default function PayoutHistory({ data }) {
+  const { t } = useTranslation();
+
   if (!data) {
     return null;
   }
@@ -9,11 +12,11 @@ export default function PayoutHistory({ data }) {
     <div className="panel p-6">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">Payout ledger</p>
-          <h3 className="mt-2 text-2xl font-bold text-primary">Recent transfers</h3>
+          <p className="eyebrow">{t("dashboard.payoutLedger.eyebrow")}</p>
+          <h3 className="mt-2 text-2xl font-bold text-primary">{t("dashboard.payoutLedger.title")}</h3>
         </div>
         <div className="text-right">
-          <p className="text-sm text-on-surface-variant">Total amount</p>
+          <p className="text-sm text-on-surface-variant">{t("dashboard.payoutLedger.total")}</p>
           <p className="text-xl font-bold text-primary">{formatCurrency(data.total_amount)}</p>
         </div>
       </div>
@@ -35,17 +38,17 @@ export default function PayoutHistory({ data }) {
               <p className="text-sm text-on-surface-variant">{formatDateTime(payout.completed_at || payout.initiated_at)}</p>
               <p className="mt-1 text-xs text-on-surface-variant">
                 {payout.status === "failed"
-                  ? "Backup action needed"
+                  ? t("dashboard.payoutLedger.backup_needed")
                   : payout.status === "processing"
-                    ? "Transfer in progress"
+                    ? t("dashboard.payoutLedger.in_progress")
                     : payout.status === "pending"
-                      ? "Queued for payout"
-                      : "Transfer completed"}
+                      ? t("dashboard.payoutLedger.queued")
+                      : t("dashboard.payoutLedger.completed")}
               </p>
             </div>
           </div>
         ))}
-        {!data.payouts?.length ? <p className="text-sm text-on-surface-variant">No payouts yet.</p> : null}
+        {!data.payouts?.length ? <p className="text-sm text-on-surface-variant">{t("dashboard.payoutLedger.empty")}</p> : null}
       </div>
     </div>
   );

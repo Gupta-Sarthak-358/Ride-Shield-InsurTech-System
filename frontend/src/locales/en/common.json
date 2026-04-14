@@ -85,6 +85,80 @@
     "alerts": {
       "eyebrow": "Nearby alerts",
       "signal_strength": "- signal strength {{score}}"
+    },
+    "decisionPanel": {
+      "eyebrow": "Decision panel",
+      "heading_idle": "No active claim needs attention right now.",
+      "reason_idle": "RideShield is monitoring your zone and will create a claim automatically if a covered incident is verified.",
+      "next_idle": "You do not need to do anything right now.",
+      "heading_delayed": "Your latest claim is waiting for a manual check.",
+      "heading_approved": "Your latest decision is already approved.",
+      "heading_rejected": "The latest claim was rejected.",
+      "why_matters": "Why this matters now",
+      "what_next": "What happens next",
+      "narrative": "Protection narrative",
+      "claim": "Claim"
+    },
+    "coverage": {
+      "eyebrow": "Coverage",
+      "premium": "Premium",
+      "cap": "Coverage cap",
+      "expires": "Expires",
+      "activates": "Activates",
+      "triggers_prefix": "Triggers covered: ",
+      "no_policy": "No active policy",
+      "no_policy_desc": "Register or buy a plan to activate protection.",
+      "activation_in": "Activation in {{hours}} hours unless demo force-activation is used."
+    },
+    "disruptionFeed": {
+      "eyebrow": "Live disruption feed",
+      "title": "Active incidents",
+      "desc": "RideShield watches signal clusters in the background, merges overlapping triggers into one incident, and turns that incident into an explainable claim path.",
+      "empty": "No active disruptions right now.",
+      "merge_note": "Threshold breaches in the same zone and time window were merged into one incident so the worker experiences one coherent claim story instead of duplicate event noise."
+    },
+    "coverageOutlook": {
+      "eyebrow": "Coverage outlook",
+      "subtitle": "Current disruption outlook",
+      "why_matters": "Why this matters now",
+      "main_signals": "Main signals",
+      "tracking": "RideShield keeps tracking this outlook as new disruption signals arrive.",
+      "empty_signals": "Detailed signal contributions are not available for this view yet.",
+      "loading": "Loading...",
+      "no_risk_data": "No risk data available"
+    },
+    "historyList": {
+      "empty": "No claims found for this view.",
+      "incident": "Incident",
+      "zone": "Zone",
+      "triggers": "Triggers",
+      "status": "Status",
+      "amount": "Amount",
+      "score": "Score",
+      "grouped": "grouped into one disruption incident",
+      "linked_claims": "linked claims"
+    },
+    "payoutLedger": {
+      "eyebrow": "Payout ledger",
+      "title": "Recent transfers",
+      "total": "Total amount",
+      "empty": "No payouts yet.",
+      "backup_needed": "Backup action needed",
+      "in_progress": "Transfer in progress",
+      "queued": "Queued for payout",
+      "completed": "Transfer completed"
+    },
+    "trustScore": {
+      "risk": "Risk: Zone and earnings context",
+      "fraud": "Fraud: Used to protect payout integrity",
+      "trust": "Trust: Stabilizes borderline decisions",
+      "risk_label": "Risk:",
+      "risk_desc": " Zone and earnings context",
+      "fraud_label": "Fraud:",
+      "fraud_desc": " Used to protect payout integrity",
+      "trust_label": "Trust:",
+      "trust_desc": " Stabilizes borderline decisions",
+      "trust_title": "Trust"
     }
   },
   "claim": {
@@ -374,5 +448,62 @@
     "UNKNOWN_ERROR": "An unknown error occurred.",
     "FORBIDDEN": "You do not have permission for this action.",
     "SERVER_ERROR": "A server error occurred. Please try again later."
+  },
+  "howItWorks": {
+    "hero_eyebrow": "How RideShield works",
+    "hero_title": "A policy engine, trigger engine, and payout engine stitched into one clear product.",
+    "hero_desc": "This page should feel like a journey through the system, not a stack of documentation boxes. Inputs become incidents, incidents become decisions, and decisions become payouts.",
+    "btn_explore": "Explore onboarding",
+    "btn_signin": "Sign in",
+    "promise_eyebrow": "Core promise",
+    "promise_text": "Workers should understand why money arrived, not wonder whether a form was lost.",
+    "diff_eyebrow": "What makes it different",
+    "diff_text": "Zero manual filing, incident-first logic, fraud-aware decisions, and visible worker/admin reasoning.",
+    "workerFlow": {
+      "eyebrow": "Worker flow",
+      "title": "From coverage purchase to payout",
+      "desc": "This is the actual sequence RideShield is built around. Each step should feel like something is happening.",
+      "step1_title": "Input",
+      "step1_body": "Worker registers, selects a city and zone, and buys weekly cover linked to the right disruption classes.",
+      "step1_step": "Step 1",
+      "step2_title": "Processing",
+      "step2_body": "RideShield monitors weather, AQI, traffic, platform, and civic signals in that worker's operating zone.",
+      "step2_step": "Step 2",
+      "step3_title": "Incident creation",
+      "step3_body": "Threshold crossings are merged into one incident so the worker sees a coherent story instead of stacked duplicate events.",
+      "step3_step": "Step 3",
+      "step4_title": "Decision",
+      "step4_body": "Coverage, confidence, trust, and fraud pressure determine whether the claim is approved, delayed, or rejected.",
+      "step4_step": "Step 4",
+      "step5_title": "Settlement",
+      "step5_body": "Approved claims turn into payout records immediately in simulation mode, with the reasoning still visible in the UI.",
+      "step5_step": "Step 5"
+    },
+    "policyEngine": {
+      "eyebrow": "Policy engine",
+      "title": "What the policy layer is actually doing",
+      "desc": "Coverage logic should be visible here instead of staying implicit inside onboarding.",
+      "weekly_cover": "Weekly cover",
+      "weekly_cover_detail": "Policies are bought weekly, with coverage caps and trigger coverage tied to the selected plan.",
+      "trigger_aware": "Trigger-aware cover",
+      "trigger_aware_detail": "Each plan defines which disruption classes are covered: rain, heat, AQI, traffic, platform outage, and social disruption.",
+      "waiting_period": "Waiting period",
+      "waiting_period_detail": "A short activation delay is used so workers cannot buy coverage only after a disruption is already visible.",
+      "zone_logic": "Zone-aware logic",
+      "zone_logic_detail": "Coverage and triggering are tied to city and zone records, not just a generic global rule."
+    },
+    "systemLayers": {
+      "eyebrow": "System layers",
+      "title": "How the backend becomes a trusted product",
+      "desc": "The external inputs are simulated for demo use, but the core engine is real and the decisions are exposed in the UI.",
+      "trigger_engine": "Trigger engine",
+      "trigger_engine_detail": "Mocked external feeds supply weather, AQI, traffic, platform, and civic signals. The trigger engine applies real thresholds and zone-aware profiles to decide when an incident exists.",
+      "claim_processor": "Claim processor",
+      "claim_processor_detail": "Claims are not filed by workers. RideShield identifies active covered workers in the affected zone and creates one claim per worker per incident window.",
+      "decision_engine": "Decision engine",
+      "decision_engine_detail": "Disruption strength, event confidence, fraud score, and trust score are combined into an explainable approval, delay, or rejection path.",
+      "payout_executor": "Payout executor",
+      "payout_executor_detail": "Approved claims are turned into payout records immediately in simulation mode so the worker and admin surfaces show the outcome end to end."
+    }
   }
 }

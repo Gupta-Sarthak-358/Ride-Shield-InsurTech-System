@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
 export default function TrustScoreGauge({ score = 0 }) {
+  const { t } = useTranslation();
+
   const numeric = Number(score || 0);
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
@@ -23,13 +26,13 @@ export default function TrustScoreGauge({ score = 0 }) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold text-primary">{numeric.toFixed(2)}</span>
-          <span className="text-[11px] uppercase tracking-[0.24em] text-on-surface-variant">Trust</span>
+          <span className="text-[11px] uppercase tracking-[0.24em] text-on-surface-variant">{t("dashboard.trustScore.trust_title")}</span>
         </div>
       </div>
       <div className="space-y-2 text-sm text-on-surface-variant">
-        <p><span className="font-semibold text-primary">Risk:</span> Zone and earnings context</p>
-        <p><span className="font-semibold text-primary">Fraud:</span> Used to protect payout integrity</p>
-        <p><span className="font-semibold text-primary">Trust:</span> Stabilizes borderline decisions</p>
+        <p><span className="font-semibold text-primary">{t("dashboard.trustScore.risk_label")}</span>{t("dashboard.trustScore.risk_desc")}</p>
+        <p><span className="font-semibold text-primary">{t("dashboard.trustScore.fraud_label")}</span>{t("dashboard.trustScore.fraud_desc")}</p>
+        <p><span className="font-semibold text-primary">{t("dashboard.trustScore.trust_label")}</span>{t("dashboard.trustScore.trust_desc")}</p>
       </div>
     </div>
   );
