@@ -133,7 +133,7 @@ def test_low_payout_moderate_risk_claim_can_approve_when_signals_are_only_weak()
     assert result["decision_confidence"] >= 0.6
 
 
-def test_same_borderline_profile_with_higher_payout_stays_in_review():
+def test_same_borderline_profile_above_new_caps_stays_in_review():
     result = decision_engine.decide(
         disruption_score=0.42,
         event_confidence=0.8,
@@ -148,7 +148,93 @@ def test_same_borderline_profile_with_higher_payout_stays_in_review():
             "fallback_used": False,
         },
         trust_score=0.56,
-        payout_amount=220,
+        payout_amount=260,
     )
     assert result["decision"] == "delayed"
     assert result["inputs"]["low_payout_confident_approve"] is False
+
+
+def test_safe_borderline_band_can_auto_approve_stable_moderate_claim():
+    result = decision_engine.decide(
+        disruption_score=0.47,
+        event_confidence=0.68,
+        fraud_result={
+            "adjusted_fraud_score": 0.27,
+            "raw_fraud_score": 0.34,
+            "flags": ["movement", "pre_activity"],
+            "signals": {"movement": 0.57, "pre_activity": 0.55},
+            "is_suspicious": False,
+            "is_high_risk": False,
+            "ml_confidence": 0.9,
+            "fallback_used": False,
+        },
+        trust_score=0.58,
+        payout_amount=190,
+    )
+    assert result["decision"] == "approved"
+    assert result["inputs"]["borderline_confident_approve"] is True
+    assert result["breakdown"]["automation_confidence"] >= 0.6
+
+
+def test_safe_borderline_band_does_not_approve_low_trust_claim():
+    result = decision_engine.decide(
+        disruption_score=0.47,
+        event_confidence=0.68,
+        fraud_result={
+            "adjusted_fraud_score": 0.27,
+            "raw_fraud_score": 0.34,
+            "flags": ["movement", "pre_activity"],
+            "signals": {"movement": 0.57, "pre_activity": 0.55},
+            "is_suspicious": False,
+            "is_high_risk": False,
+            "ml_confidence": 0.9,
+            "fallback_used": False,
+        },
+        trust_score=0.18,
+        payout_amount=190,
+    )
+    assert result["decision"] == "delayed"
+    assert result["inputs"]["borderline_confident_approve"] is False
+
+
+def test_extended_low_payout_cap_approves_moderate_exposure_weak_signal_claim():
+    result = decision_engine.decide(
+        disruption_score=0.43,
+        event_confidence=0.68,
+        fraud_result={
+            "adjusted_fraud_score": 0.25,
+            "raw_fraud_score": 0.33,
+            "flags": ["movement", "pre_activity"],
+            "signals": {"movement": 0.56, "pre_activity": 0.54},
+            "is_suspicious": False,
+            "is_high_risk": False,
+            "ml_confidence": 0.88,
+            "fallback_used": False,
+        },
+        trust_score=0.44,
+        payout_amount=160,
+    )
+    assert result["decision"] == "approved"
+    assert result["inputs"]["low_payout_confident_approve"] is True
+
+
+def test_extended_caps_still_hold_high_exposure_weak_signal_claim_for_review():
+    result = decision_engine.decide(
+        disruption_score=0.43,
+        event_confidence=0.68,
+        fraud_result={
+            "adjusted_fraud_score": 0.25,
+            "raw_fraud_score": 0.33,
+            "flags": ["movement", "pre_activity"],
+            "signals": {"movement": 0.56, "pre_activity": 0.54},
+            "is_suspicious": False,
+            "is_high_risk": False,
+            "ml_confidence": 0.88,
+            "fallback_used": False,
+        },
+        trust_score=0.44,
+        payout_amount=260,
+    )
+    assert result["decision"] == "delayed"
+    assert result["inputs"]["low_payout_confident_approve"] is False
+    assert result["inputs"]["borderline_confident_approve"] is False

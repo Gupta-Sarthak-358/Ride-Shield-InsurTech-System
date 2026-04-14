@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 class DecisionEngine:
     WEIGHTS = {"disruption": 0.35, "confidence": 0.25, "fraud_inverse": 0.30, "trust": 0.10}
-    THRESHOLDS = {"approved": 0.65, "delayed": 0.45}
+    THRESHOLDS = {"approved": 0.65, "borderline_approved": 0.60, "delayed": 0.45}
+    PAYOUT_CAPS = {"low_payout_confident": 175, "weak_signal_confident": 200, "borderline_confident": 220}
     LOW_RISK_REVIEW_FLAGS = {"movement", "pre_activity"}
     MODERATE_REVIEW_FLAGS = {"device"}
     STRONG_REVIEW_FLAGS = {"duplicate", "cluster", "timing", "income_inflation"}
@@ -232,10 +233,10 @@ class DecisionEngine:
             flag_profile=flag_profile,
         )
         low_payout_confident_approve = (
-            payout_amount <= 100
+            payout_amount <= self.PAYOUT_CAPS["low_payout_confident"]
             and adjusted_fraud <= 0.30
             and trust_score >= 0.25
-            and event_confidence >= 0.70
+            and event_confidence >= 0.65
             and final_score >= 0.55
             and automation_confidence >= 0.60
             and flag_profile["strong_count"] == 0
@@ -244,10 +245,20 @@ class DecisionEngine:
             flag_profile["noise_only"]
             and adjusted_fraud <= 0.24
             and trust_score >= 0.25
-            and event_confidence >= 0.70
+            and event_confidence >= 0.65
             and final_score >= 0.55
             and automation_confidence >= 0.55
-            and payout_amount <= 140
+            and payout_amount <= self.PAYOUT_CAPS["weak_signal_confident"]
+        )
+        borderline_confident_approve = (
+            final_score >= self.THRESHOLDS["borderline_approved"]
+            and adjusted_fraud <= 0.30
+            and trust_score >= 0.30
+            and event_confidence >= 0.65
+            and automation_confidence >= 0.60
+            and flag_profile["strong_count"] == 0
+            and flag_profile["moderate_count"] == 0
+            and payout_amount <= self.PAYOUT_CAPS["borderline_confident"]
         )
         threshold_score_approve = final_score >= self.THRESHOLDS["approved"] and (
             final_score >= 0.78 or automation_confidence >= 0.56
@@ -258,6 +269,7 @@ class DecisionEngine:
             or trusted_low_risk_approve
             or weak_signal_confident_approve
             or low_payout_confident_approve
+            or borderline_confident_approve
             or threshold_score_approve
         ):
             decision = "approved"
@@ -274,6 +286,10 @@ class DecisionEngine:
             elif low_payout_confident_approve:
                 explanation = (
                     f"Claim approved because payout exposure stayed low and confidence remained stable (score: {final_score})."
+                )
+            elif borderline_confident_approve:
+                explanation = (
+                    f"Claim approved in the safe borderline band because trust, fraud, and confidence stayed stable (score: {final_score})."
                 )
             else:
                 explanation = f"Claim approved with sufficient confidence (score: {final_score})."
@@ -302,6 +318,7 @@ class DecisionEngine:
                 or trusted_low_risk_approve
                 or weak_signal_confident_approve
                 or low_payout_confident_approve
+                or borderline_confident_approve
             ),
             auto_reject=auto_reject,
             feedback_result=feedback_result,
@@ -348,6 +365,7 @@ class DecisionEngine:
                 "payout_amount": payout_amount,
                 "weak_signal_confident_approve": weak_signal_confident_approve,
                 "low_payout_confident_approve": low_payout_confident_approve,
+                "borderline_confident_approve": borderline_confident_approve,
                 "auto_approve": auto_approve,
                 "trusted_low_risk_approve": trusted_low_risk_approve,
                 "auto_reject": auto_reject,

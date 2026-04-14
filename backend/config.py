@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     SESSION_SECRET: str
     SESSION_DURATION_HOURS: int = 72
     SESSION_COOKIE_SAMESITE: str = "none" if ENV == "prod" else "lax"
+    SESSION_COOKIE_SECURE: bool = ENV == "prod"
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str
     CORS_ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
@@ -77,6 +78,22 @@ class Settings(BaseSettings):
         if normalized in {"1", "true", "yes", "on", "debug", "development", "dev"}:
             return True
         if normalized in {"0", "false", "no", "off", "release", "prod", "production"}:
+            return False
+
+        return bool(value)
+
+    @field_validator("SESSION_COOKIE_SECURE", mode="before")
+    @classmethod
+    def parse_cookie_secure(cls, value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return False
+
+        normalized = str(value).strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
             return False
 
         return bool(value)
