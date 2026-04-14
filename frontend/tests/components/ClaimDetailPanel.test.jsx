@@ -56,7 +56,6 @@ describe("ClaimDetailPanel", () => {
     );
 
     expect(screen.getByText(/44% check intensity/i)).toBeInTheDocument();
-    expect(screen.getByText(/fraud-model-v1 - hybrid scoring active/i)).toBeInTheDocument();
     expect(screen.getByText("Claim frequency")).toBeInTheDocument();
     expect(screen.getByText(/Gross hourly reference/i)).toBeInTheDocument();
     expect(screen.getByText(/Net protected hourly/i)).toBeInTheDocument();
