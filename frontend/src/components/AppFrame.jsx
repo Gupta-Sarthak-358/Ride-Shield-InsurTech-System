@@ -5,7 +5,7 @@ import NotificationBell from "./NotificationBell";
 
 import { useAuth } from "../auth/AuthContext";
 import toast from "react-hot-toast";
-import { t, toggleLang, getLang } from "../utils/i18n";
+import { t, toggleLang, useLang } from "../utils/i18n";
 
 const workerNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -22,11 +22,10 @@ export default function AppFrame({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { session, role, logout } = useAuth();
-  const [, setLangState] = useState(getLang());
+  useLang();
 
   function handleToggleLang() {
-    const next = toggleLang();
-    setLangState(next);
+    toggleLang();
   }
 
   const navItems = role === "admin" ? adminNav : workerNav;

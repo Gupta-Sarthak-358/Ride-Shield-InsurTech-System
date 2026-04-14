@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Bell } from "lucide-react";
 import { notificationsApi } from "../api/notifications";
 import { useAuth } from "../auth/AuthContext";
-import { t } from "../utils/i18n";
+import { t, useLang } from "../utils/i18n";
 
 const CATEGORY_ICONS = {
   claim_approved: "✅",
@@ -25,6 +25,7 @@ function timeAgo(dateStr) {
 }
 
 export default function NotificationBell() {
+  useLang();
   const { session, role } = useAuth();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);

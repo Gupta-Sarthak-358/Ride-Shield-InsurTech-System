@@ -129,3 +129,11 @@ Frontend:
 Phase 3 is reserved for work outside this stable demo snapshot: real provider integrations, stronger fraud calibration, and more production-grade payout and observability layers.
 
 See `docs/DevNotes.md` for concise implementation notes and `docs/Phase3_Roadmap.md` for future scope.
+
+## Recent Infrastructure & Polish Updates
+
+*   **Deployment Readiness:** Backend configured for Railway with dynamic `$PORT` binding and proper `0.0.0.0` host routing. Swagger UI (`/docs`) Content Security Policy patched to allow external CDN assets.
+*   **Frontend Routing:** SPA client-side routing explicitly supported on Vercel via custom `vercel.json` rewrites ensuring no 404s on direct navigation.
+*   **Reactive Localization:** A `useLang` hook leveraging a `Set()`-based micro-subscription system powers instant English ↔ Hindi translations across the UI without expensive page reloads.
+*   **Fraud Fingerprinting:** Device fingerprint hashing (`frontend/src/utils/fingerprint.js`) actively harvests browser metadata (UserAgent, Screen, Timezone) during auth flows, writing straight to the existing PostgreSQL null-safe schema for robust fraud ring clustering.
+

@@ -70,6 +70,10 @@ class WorkerRegisterRequest(BaseModel):
         ...,
         description="Worker consents to location tracking for claim validation"
     )
+    device_fingerprint: Optional[str] = Field(
+        None,
+        description="Client device generated fingerprint"
+    )
 
     @field_validator("city")
     @classmethod

@@ -56,6 +56,10 @@ async def worker_login(
             detail=f"Worker account is {worker.status}.",
         )
 
+    if request.device_fingerprint and request.device_fingerprint != worker.device_fingerprint:
+        worker.device_fingerprint = request.device_fingerprint
+        await db.commit()
+
     token = create_session_token(worker_session_payload(worker))
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
@@ -93,6 +97,10 @@ async def admin_login(request: AdminLoginRequest, http_request: Request, respons
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid admin credentials.",
         )
+
+    if request.device_fingerprint and request.device_fingerprint != worker.device_fingerprint:
+        worker.device_fingerprint = request.device_fingerprint
+        await db.commit()
 
     token = create_session_token(
         {

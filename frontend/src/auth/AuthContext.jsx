@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 import { authApi } from "../api/auth";
 import { setAuthToken } from "../api/client";
+import { getDeviceFingerprint } from "../utils/fingerprint";
 
 const SESSION_KEY = "rideshield.session_meta";
 const LEGACY_WORKER_ID_KEY = "rideshield.workerId";
@@ -149,7 +150,8 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(session?.session),
       role: session?.session?.role || null,
       async loginWorker(phone, password) {
-        const response = await authApi.workerLogin({ phone, password });
+        const device_fingerprint = getDeviceFingerprint();
+        const response = await authApi.workerLogin({ phone, password, device_fingerprint });
         const next = { session: response.data.session };
         flushSync(() => {
           setSession(next);

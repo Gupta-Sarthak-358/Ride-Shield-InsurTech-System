@@ -16,6 +16,7 @@ import {
   formatCurrency,
   humanizeSlug,
 } from "../utils/formatters";
+import { getDeviceFingerprint } from "../utils/fingerprint";
 
 const initialForm = {
   name: "",
@@ -428,6 +429,7 @@ export default function Onboarding() {
         self_reported_income: Number(form.self_reported_income),
         working_hours: Number(form.working_hours),
         consent_given: form.consent_given,
+        device_fingerprint: getDeviceFingerprint(),
       });
       setRegistration(response.data);
       setPlanCatalog([]);

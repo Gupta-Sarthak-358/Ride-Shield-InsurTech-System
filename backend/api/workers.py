@@ -117,6 +117,7 @@ async def register_worker(
         consent_timestamp=utc_now_naive(),
         risk_score=risk_result["risk_score"],
         ip_address=client_ip,
+        device_fingerprint=request.device_fingerprint,
         status="active",
     )
     db.add(worker)
@@ -146,6 +147,7 @@ async def register_worker(
                 "risk_score": risk_result["risk_score"],
                 "consent_given": True,
                 "ip_address": client_ip,
+                "device_fingerprint": request.device_fingerprint,
             },
             performed_by="system",
         )

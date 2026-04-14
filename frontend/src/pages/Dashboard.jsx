@@ -21,6 +21,7 @@ import TrustBadge from "../components/TrustBadge";
 import TrustScoreGauge from "../components/TrustScoreGauge";
 import { formatCurrency, formatDateTime, humanizeSlug } from "../utils/formatters";
 import { getDisruptionTone } from "../utils/toneHelpers";
+import { t, useLang } from "../utils/i18n";
 
 function claimPriority(claim) {
   if (!claim) return -1;
@@ -201,6 +202,7 @@ function ExpiredGate({ workerId, lastPolicy, onPurchased }) {
 
 /* ─── Main Dashboard ─── */
 export default function Dashboard() {
+  useLang();
   const { workerId } = useParams();
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -367,7 +369,7 @@ export default function Dashboard() {
               {humanizeSlug(worker.city)} - {worker.zone ? humanizeSlug(worker.zone) : "No zone"}
             </span>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-primary">Worker Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-primary">{t("dashboard.title")}</h1>
         </div>
         <button type="button" className="button-secondary !rounded-full !py-2" onClick={load}>
           <RefreshCcw size={16} />

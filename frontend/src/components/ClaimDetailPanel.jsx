@@ -1,6 +1,6 @@
 import { formatCurrency, formatDateTime, formatScore, humanizeSlug, statusPill } from "../utils/formatters";
 import { workerClaimNarrative, workerFriendlyFactors } from "../utils/decisionNarrative";
-import { t } from "../utils/i18n";
+import { t, useLang } from "../utils/i18n";
 import WhatsAppPreview from "./WhatsAppPreview";
 
 function renderTriggerList(triggers = []) {
@@ -11,6 +11,7 @@ function renderTriggerList(triggers = []) {
 }
 
 export default function ClaimDetailPanel({ claim }) {
+  useLang();
   if (!claim) {
     return (
       <div className="context-panel p-6">
