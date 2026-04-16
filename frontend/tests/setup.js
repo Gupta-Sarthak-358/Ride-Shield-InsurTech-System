@@ -1,11 +1,13 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
+const tMock = vi.fn((key) => key);
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key) => key,
+    t: tMock,
     i18n: {
-      changeLanguage: () => new Promise(() => {}),
+      changeLanguage: () => Promise.resolve(),
       language: "en"
     }
   }),

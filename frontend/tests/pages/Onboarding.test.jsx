@@ -14,6 +14,8 @@ const mockLoginWorker = vi.fn();
 vi.mock("../../src/auth/AuthContext", () => ({
   useAuth: () => ({
     loginWorker: mockLoginWorker,
+    logout: vi.fn(),
+    session: null,
   }),
 }));
 
