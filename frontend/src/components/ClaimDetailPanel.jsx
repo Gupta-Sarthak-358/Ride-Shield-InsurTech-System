@@ -3,9 +3,9 @@ import { workerClaimNarrative, workerFriendlyFactors } from "../utils/decisionNa
 import { useTranslation } from "react-i18next";
 import WhatsAppPreview from "./WhatsAppPreview";
 
-function renderTriggerList(triggers = []) {
+function renderTriggerList(triggers = [], t) {
   if (!triggers.length) {
-    return "None";
+    return t("claim.none");
   }
   return triggers.map(humanizeSlug).join(", ");
 }
@@ -16,7 +16,7 @@ export default function ClaimDetailPanel({ claim }) {
     return (
       <div className="context-panel p-6">
         <div className="mb-5">
-          <p className="eyebrow">Claim detail</p>
+          <p className="eyebrow">{t("claim.claim_detail")}</p>
           <h3 className="mt-2 text-2xl font-bold text-primary">{t("claim.select")}</h3>
         </div>
         <p className="text-sm leading-6 text-on-surface-variant">
@@ -42,52 +42,51 @@ export default function ClaimDetailPanel({ claim }) {
   return (
     <div className="context-panel p-6">
       <div className="mb-5">
-        <p className="eyebrow">Claim detail</p>
+        <p className="eyebrow">{t("claim.claim_detail")}</p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <span className={statusPill(claim.status)}>{humanizeSlug(claim.status)}</span>
-          <h3 className="text-2xl font-bold text-primary">{renderTriggerList(incidentTriggers)}</h3>
+          <h3 className="text-2xl font-bold text-primary">{renderTriggerList(incidentTriggers, t)}</h3>
         </div>
         <p className="mt-2 text-sm text-on-surface-variant">{formatDateTime(claim.created_at)}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-on-surface-variant">Decision explanation</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.decision_explanation")}</p>
           <p className="mt-3 text-sm leading-7 text-on-surface">
-            {decisionExperience.summary || breakdown.explanation || claim.rejection_reason || "No explanation available."}
+            {decisionExperience.summary || breakdown.explanation || claim.rejection_reason || t("claim.no_explanation")}
           </p>
           {decisionExperience.action_reason ? (
             <p className="mt-3 text-sm leading-6 text-on-surface-variant">{decisionExperience.action_reason}</p>
           ) : null}
           {decisionExperience.next_step ? (
-            <p className="mt-3 text-sm leading-6 text-on-surface-variant">Next step: {decisionExperience.next_step}</p>
+            <p className="mt-3 text-sm leading-6 text-on-surface-variant">{t("claim.next_step")} {decisionExperience.next_step}</p>
           ) : null}
         </div>
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-on-surface-variant">Payout impact</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.payout_impact")}</p>
           <p className="mt-3 text-lg font-semibold text-primary">
             {formatCurrency(claim.final_payout || claim.calculated_payout)}
           </p>
           <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-            Hours affected: {claim.disruption_hours ?? "--"} - Peak multiplier: {claim.peak_multiplier ?? "--"}
+            {t("claim.hours_affected")} {claim.disruption_hours ?? "--"} - {t("claim.peak_multiplier")} {claim.peak_multiplier ?? "--"}
           </p>
           {payoutBreakdown.net_income_per_hour ? (
             <div className="mt-4 space-y-1 text-sm leading-6 text-on-surface-variant">
-              <p>Gross hourly reference: {formatCurrency(payoutBreakdown.income_per_hour)}</p>
-              <p>Net protected hourly: {formatCurrency(payoutBreakdown.net_income_per_hour)}</p>
+              <p>{t("claim.gross_hourly")} {formatCurrency(payoutBreakdown.income_per_hour)}</p>
+              <p>{t("claim.net_protected")} {formatCurrency(payoutBreakdown.net_income_per_hour)}</p>
               <p>
-                Operating-cost factor: {Math.round(Number(payoutBreakdown.operating_cost_factor || 0) * 100)}%
+                {t("claim.operating_cost")} {Math.round(Number(payoutBreakdown.operating_cost_factor || 0) * 100)}%
               </p>
             </div>
           ) : null}
         </div>
       </div>
 
-      {/* Income Protection — the core value proposition */}
       {claim.income_loss && claim.income_loss.estimated_income_loss > 0 ? (
         <div className="mt-4 panel-quiet rounded-[24px] p-4" style={{ borderLeft: '4px solid var(--primary)' }}>
           <p className="eyebrow" style={{ fontSize: '0.75rem', letterSpacing: '0.08em', color: 'var(--on-surface-variant)' }}>
-            Income Protection Summary
+            {t("claim.income_protection")}
           </p>
           <div className="mt-3 grid gap-4 sm:grid-cols-3">
             <div>
@@ -103,17 +102,12 @@ export default function ClaimDetailPanel({ claim }) {
               </p>
             </div>
             <div>
-              <p className="text-sm text-on-surface-variant">Coverage</p>
+              <p className="text-sm text-on-surface-variant">{t("claim.coverage_ratio")}</p>
               <p className="mt-1 text-lg font-bold text-primary">
-                {Math.round(claim.income_loss.coverage_ratio * 100)}%
+                {Math.round(claim.income_loss?.coverage_ratio * 100)}%
               </p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-on-surface-variant">
-            Based on {formatCurrency(claim.income_loss.calculation_basis?.income_per_hour)}/hr
-            × {claim.income_loss.calculation_basis?.disruption_hours}h disruption
-            {claim.income_loss.calculation_basis?.peak_multiplier > 1 ? ` × ${claim.income_loss.calculation_basis.peak_multiplier}x peak` : ''}
-          </p>
         </div>
       ) : null}
 
@@ -121,32 +115,32 @@ export default function ClaimDetailPanel({ claim }) {
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="text-sm text-on-surface-variant">Decision strength</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.decision_strength")}</p>
           <p className="mt-2 font-semibold text-primary">{formatScore(claim.final_score)}</p>
         </div>
         <div>
-          <p className="text-sm text-on-surface-variant">Payment safety check</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.payment_safety")}</p>
           <p className="mt-2 font-semibold text-primary">{formatScore(claim.fraud_score)}</p>
         </div>
         <div>
-          <p className="text-sm text-on-surface-variant">Incident evidence</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.incident_evidence")}</p>
           <p className="mt-2 font-semibold text-primary">{formatScore(claim.event_confidence)}</p>
         </div>
         <div>
-          <p className="text-sm text-on-surface-variant">Account trust</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.account_trust")}</p>
           <p className="mt-2 font-semibold text-primary">{formatScore(claim.trust_score)}</p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-on-surface-variant">Claim checks</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.claim_checks")}</p>
           <p className="mt-2 text-lg font-semibold text-primary">
             {fraudModel.fraud_probability !== undefined
               ? `${Math.round(Number(fraudModel.fraud_probability || 0) * 100)}% check intensity`
-              : "Standard automated checks"}
+              : t("claim.standard_checks")}
           </p>
-          {behaviorLabel ? <p className="mt-3 text-sm leading-6 text-on-surface-variant">Case type: {behaviorLabel}</p> : null}
+          {behaviorLabel ? <p className="mt-3 text-sm leading-6 text-on-surface-variant">{t("claim.case_type")} {behaviorLabel}</p> : null}
           {Array.isArray(fraudModel.top_factors) && fraudModel.top_factors.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {workerFactors.map((factor) => (
@@ -156,11 +150,11 @@ export default function ClaimDetailPanel({ claim }) {
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm leading-6 text-on-surface-variant">No elevated review checks on this claim.</p>
+            <p className="mt-3 text-sm leading-6 text-on-surface-variant">{t("claim.no_elevated")}</p>
           )}
         </div>
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-on-surface-variant">Worker explanation</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.worker_explanation")}</p>
           <p className="mt-2 text-sm leading-7 text-on-surface">
             {workerClaimNarrative(claim)}
           </p>
@@ -169,7 +163,7 @@ export default function ClaimDetailPanel({ claim }) {
           ) : null}
           {behaviorLabel ? (
             <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-              Claim pattern: <span className="font-semibold text-primary">{behaviorLabel}</span>
+              {t("claim.claim_pattern")} <span className="font-semibold text-primary">{behaviorLabel}</span>
             </p>
           ) : null}
         </div>
@@ -177,20 +171,20 @@ export default function ClaimDetailPanel({ claim }) {
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-on-surface-variant">Incident triggers</p>
-          <p className="mt-2 text-sm leading-7 text-on-surface">{renderTriggerList(incidentTriggers)}</p>
-          <p className="mt-3 text-sm text-on-surface-variant">Covered by policy</p>
-          <p className="mt-2 text-sm leading-7 text-on-surface">{renderTriggerList(coveredTriggers)}</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.incident_triggers")}</p>
+          <p className="mt-2 text-sm leading-7 text-on-surface">{renderTriggerList(incidentTriggers, t)}</p>
+          <p className="mt-3 text-sm text-on-surface-variant">{t("claim.covered_by_policy")}</p>
+          <p className="mt-2 text-sm leading-7 text-on-surface">{renderTriggerList(coveredTriggers, t)}</p>
         </div>
         <div className="panel-quiet rounded-[24px] p-4">
-          <p className="text-sm text-on-surface-variant">AI Decision Factors</p>
+          <p className="text-sm text-on-surface-variant">{t("claim.ai_decision_factors")}</p>
           <div className="mt-3 space-y-3">
             {[
-              { label: "Disruption strength", value: components.disruption_component, color: "#42a5f5" },
-              { label: "Incident evidence", value: components.confidence_component, color: "#66bb6a" },
-              { label: "Payment safety", value: components.fraud_component, color: "#ef5350" },
-              { label: "Account trust", value: components.trust_component, color: "#ab47bc" },
-              { label: "Flag penalty", value: components.flag_penalty, color: "#ffa726" },
+              { label: t("claim.disruption_strength"), value: components.disruption_component, color: "#42a5f5" },
+              { label: t("claim.incident_evidence"), value: components.confidence_component, color: "#66bb6a" },
+              { label: t("claim.payment_safety_factor"), value: components.fraud_component, color: "#ef5350" },
+              { label: t("claim.account_trust"), value: components.trust_component, color: "#ab47bc" },
+              { label: t("claim.flag_penalty"), value: components.flag_penalty, color: "#ffa726" },
             ].map(({ label, value, color }) => {
               const pct = Math.round(Math.max(0, Math.min(1, Number(value || 0))) * 100);
               return (
@@ -216,9 +210,9 @@ export default function ClaimDetailPanel({ claim }) {
           </div>
           {fraudModel.confidence !== undefined ? (
             <p className="mt-4 text-xs text-on-surface-variant">
-              Model confidence: <span className="font-semibold text-on-surface">{Math.round(Number(fraudModel.confidence || 0) * 100)}%</span>
+              {t("claim.model_confidence")} <span className="font-semibold text-on-surface">{Math.round(Number(fraudModel.confidence || 0) * 100)}%</span>
               {fraudModel.model_version ? ` · v${fraudModel.model_version}` : ""}
-              {fraudModel.fallback_used ? " · fallback mode" : ""}
+              {fraudModel.fallback_used ? ` · ${t("claim.fallback_mode")}` : ""}
             </p>
           ) : null}
         </div>

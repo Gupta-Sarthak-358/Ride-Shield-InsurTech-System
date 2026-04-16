@@ -12,7 +12,9 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:i18n": "node scripts/check-i18n.js",
+    "precommit": "npm run check:i18n && npm run lint"
   },
   "dependencies": {
     "axios": "^1.11.0",

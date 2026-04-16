@@ -234,13 +234,11 @@ export default function Onboarding() {
         );
       }
     } catch {
-      setLocationsError(
-        "Worker geography could not be loaded. Retry to continue onboarding.",
-      );
+      setLocationsError(t("onboarding.errors.locations"));
     } finally {
       setLocationsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadZones = useCallback(async (citySlug) => {
     try {
@@ -256,9 +254,9 @@ export default function Onboarding() {
         );
       }
     } catch {
-      setLocationsError("Zones could not be loaded for the selected city.");
+      setLocationsError(t("onboarding.errors.zones"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!draftLoaded) {
@@ -337,7 +335,7 @@ export default function Onboarding() {
         }
         setPlanCatalogError(
           error.response?.data?.detail ||
-            "Detailed premium pricing could not be loaded.",
+            t("onboarding.errors.plan_catalog"),
         );
       } finally {
         if (active) {
@@ -351,7 +349,7 @@ export default function Onboarding() {
     return () => {
       active = false;
     };
-  }, [planCatalogReloadKey, registration?.worker_id, step]);
+  }, [planCatalogReloadKey, registration?.worker_id, step, t]);
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -369,7 +367,7 @@ export default function Onboarding() {
     } catch (error) {
       toast.error(
         error.response?.data?.detail ||
-          "Worker sign-in failed. Use the sign-in page to continue.",
+          t("onboarding.errors.login_failed"),
       );
     } finally {
       setLoading(false);
@@ -388,7 +386,7 @@ export default function Onboarding() {
     };
     setTouched((current) => ({ ...current, ...nextTouched }));
     if (Object.keys(validationErrors).length) {
-      toast.error("Fix the highlighted registration fields first.");
+      toast.error(t("onboarding.errors.fix_fields"));
       return;
     }
     setLoading(true);
@@ -410,10 +408,10 @@ export default function Onboarding() {
       setPlanCatalogError("");
       setSelectedPlan(response.data.recommended_plan);
       setStep("plan");
-      toast.success("Worker registered. Choose a policy next.");
+      toast.success(t("onboarding.errors.register_success"));
     } catch (error) {
       toast.error(
-        error.response?.data?.detail || "Worker registration failed.",
+        error.response?.data?.detail || t("onboarding.errors.register_failed"),
       );
     } finally {
       setLoading(false);
@@ -422,7 +420,7 @@ export default function Onboarding() {
 
   async function handlePurchase() {
     if (!selectedPlan) {
-      toast.error("Select a plan before continuing");
+      toast.error(t("onboarding.errors.select_plan"));
       return;
     }
     setLoading(true);
@@ -434,9 +432,9 @@ export default function Onboarding() {
       setPolicyPurchase(response.data);
       setStep("complete");
       window.sessionStorage.removeItem(STORAGE_KEYS.onboardingDraft);
-      toast.success("Policy purchased");
+      toast.success(t("onboarding.errors.purchase_success"));
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Policy purchase failed.");
+      toast.error(error.response?.data?.detail || t("onboarding.errors.purchase_failed"));
     } finally {
       setLoading(false);
     }

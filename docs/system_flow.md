@@ -1,33 +1,36 @@
-# RideShield
+# RideShield — Demo & System Runbook
 
-RideShield is a Phase 2 demo of parametric income protection for gig delivery workers.
-It watches disruption signals, creates claims automatically for affected workers, and routes each claim through fraud-aware approval, review, or rejection without requiring the worker to file anything.
+This document provides a hands-on guide to running and evaluating the RideShield system. It covers demo credentials and access, system workflows, admin and worker interactions, and what is real vs simulated in the current build.
 
-> **Robustness & Explainability**: We improved model robustness using controlled synthetic scaling and edge-case injection, ensuring strong generalization while maintaining explainability through a policy-driven decision layer.
+> For system design, architecture, and product rationale, see the [main README](../README.md).
 
-## 🔑 Quick Access / Demo Credentials
-
-> **Important Deployment Note**: The live production build of this system is deployed and accessible to judges at **[https://ride-shield-hazel.vercel.app](https://ride-shield-hazel.vercel.app)**.
+> **Robustness & Explainability**: Model robustness is achieved using controlled synthetic scaling and edge-case injection, ensuring strong generalization while maintaining explainability through a policy-driven decision layer.
 
 ---
+
+## 🔑 Demo Access
 
 ### 🌐 Live Production Demo
-If you are evaluating the deployed live website, use these credentials.
+
+The live production build is deployed at **[https://ride-shield-hazel.vercel.app](https://ride-shield-hazel.vercel.app)**.
+
 - **Frontend URL**: [https://ride-shield-hazel.vercel.app](https://ride-shield-hazel.vercel.app)
 - **Admin Username**: `admin`
-- **Admin Password**: `admin-integrity-212` *(The deployed repo uses the hardened Phase 2 credentials).*
+- **Admin Password**: `admin-integrity-212`
 
----
+### 💻 Local Development Setup
 
-### 💻 Local Development Demo (This Repo)
-If you are running the system locally via `run_all.ps1` to test the deeper ML integration, access it at `http://localhost:3000/auth`.
+Run the full stack locally via `.\scripts\run_all.ps1` to test the deeper ML integration.
 
-**🛡️ Local Admin Dashboard**
+**Local Admin Dashboard:**
 - **Username**: `admin`
-- **Password**: `rideshield-local-admin` *(The local dev environment has a separate staging password).*
+- **Password**: `rideshield-local-admin`
 
-**👷 Local Worker Dashboard (Sample Credentials)**
-Use these credentials to sign in locally as a worker to view active policies, protection narrative, and payout history.
+Navigate to `/auth` and authenticate using the credentials above.
+
+### 👷 Sample Worker Accounts
+
+Use these credentials to authenticate as a worker and evaluate active policies, claim flows, and payout behavior.
 
 | Worker Name | Phone Number | Password | Profile Type |
 | :--- | :--- | :--- | :--- |
@@ -46,16 +49,19 @@ Use these credentials to sign in locally as a worker to view active policies, pr
 
 ---
 
-## Key Features
+## Key Capabilities
 
-- Zero-touch claims for validated disruption events
-- Weekly plan purchase and activation flow
-- Mock-based weather, AQI, traffic, platform, and civic disruption inputs
-- Incident-centric claim handling to avoid stacked same-window payouts
-- Fraud-aware decisioning with trust, confidence, and payout exposure signals
-- Worker dashboard, admin review surface, and demo runner
+- Zero-touch claim generation from validated disruption events
+- Multi-signal decision engine (disruption, fraud, trust, confidence)
+- Event-centric claim handling with deduplication
+- Hybrid fraud detection (ML + rule-based fallback)
+- Worker and admin dashboards with full decision explainability
+
+---
 
 ## How It Works
+
+At its core, RideShield transforms real-world disruptions into validated financial outcomes without requiring worker intervention.
 
 1. A worker registers, gives consent, and buys a weekly plan.
 2. The scheduler monitors mock disruption signals for supported cities and zones.
@@ -64,48 +70,66 @@ Use these credentials to sign in locally as a worker to view active policies, pr
 5. The claim is approved automatically, delayed for review, or rejected with reasons.
 6. Approved claims move to payout execution and appear in the worker and admin surfaces.
 
+---
+
 ## Demo Flow
 
 1. Start the stack and seed demo data.
-2. Open `http://localhost:3000/auth`.
-3. Sign in as admin using the credentials from `.env`.
+2. Navigate to `/auth` and sign in.
+3. Sign in as admin using the credentials above.
 4. Open the Demo Runner and create a demo worker in a chosen city.
 5. Run a scenario such as heavy rain, fraud cluster, or curfew edge case.
 6. Open the Admin Panel and show the review queue, decision context, confidence, and incident outcomes.
 7. Optionally sign in as a worker to show onboarding, active policy, claim visibility, and payout history.
 
+---
+
 ## Tech Stack
 
-- Frontend: React, Vite, Tailwind CSS, Recharts
-- Backend: FastAPI, SQLAlchemy, Alembic
-- Database: PostgreSQL
-- Machine Learning: scikit-learn models (RandomForest and GradientBoosting) generating deterministic probabilistic scores for fraud and Risk, bounded by a strict Policy-driven logic. Models are pre-trained on intelligently constrained synthetic data (50k limit) with injected edge cases, keeping generalization gaps tight (< 2%).
-- Demo inputs: local mock simulation modules
-
-## Phase 3
-
-Phase 3 is reserved for work outside this stable demo snapshot: real provider integrations, stronger fraud calibration, and more production-grade payout and observability layers.
+- **Frontend:** React, Vite, Tailwind CSS, Recharts
+- **Backend:** FastAPI, SQLAlchemy, Alembic
+- **Database:** PostgreSQL
+- **Machine Learning:** scikit-learn models (RandomForest and GradientBoosting) generating deterministic probabilistic scores for fraud and Risk, bounded by a strict policy-driven logic layer. Models are pre-trained on intelligently constrained synthetic data (50k limit) with injected edge cases, keeping generalization gaps tight (< 2%).
+- **Demo inputs:** local mock simulation modules
 
 ---
 
-# RideShield Workflow Guide
+## System Reality (What's Real vs Simulated)
 
-This guide is the practical runbook for the current repo.
-It focuses on:
-- how to run the stack
-- what each role can do
-- what is real today
-- what is still simulated or simplified
+### ✅ Integrated Now
+
+- weekly policy purchase and activation
+- trigger monitoring and scheduler
+- incident-centric claim generation
+- payout execution
+- DB-backed geography
+- risk-model-backed risk surface with fallback
+- detailed premium metadata from the plans API
+- hybrid fraud scoring with ML + rule fallback
+- forecast analytics and model-status endpoints
+- cookie-based auth with bearer fallback for Swagger/tests
+
+### ⚙️ Still Simulated or Simplified
+
+- external disruption feeds
+- payout rails
+- synthetic fraud-model training data
+- device or GPS telemetry realism
+- local runtime diagnostics
+
+---
 
 ## Operating Loop
 
-```text
-Observe signals -> detect incident -> verify policy -> score claim -> pay or review
+```
+Observe signals → detect incident → verify policy → score claim → pay or review
 ```
 
-Important product rule:
+**Core product rule:**
 - workers do not file claims manually
 - the system generates claims from validated incidents
+
+---
 
 ## Current System Shape
 
@@ -141,26 +165,7 @@ Important product rule:
 - how-it-works explainer
 - intelligence overview
 
-## Current Truth
-
-### Integrated now
-- weekly policy purchase and activation
-- trigger monitoring and scheduler
-- incident-centric claim generation
-- payout execution
-- DB-backed geography
-- risk-model-backed risk surface with fallback
-- detailed premium metadata from the plans API
-- hybrid fraud scoring with ML + rule fallback
-- forecast analytics and model-status endpoints
-- cookie-based auth with bearer fallback for Swagger/tests
-
-### Still simulated or simplified
-- external disruption feeds
-- payout rails
-- synthetic fraud-model training data
-- device or GPS telemetry realism
-- local runtime diagnostics
+---
 
 ## Local Setup
 
@@ -170,10 +175,7 @@ Important product rule:
 .\scripts\run_all.ps1
 ```
 
-This starts:
-- Docker Postgres
-- FastAPI backend
-- Vite frontend
+This starts Docker Postgres, FastAPI backend, and Vite frontend.
 
 ### 2. Seed demo data
 
@@ -181,21 +183,23 @@ This starts:
 .\venv\Scripts\python.exe -m scripts.seed_data
 ```
 
-### 3. Open the app
+### 3. Access the application
 
-- frontend: `http://localhost:3000`
-- backend docs: `http://localhost:8000/docs`
+- Frontend: `http://localhost:3000`
+- Backend docs: `http://localhost:8000/docs`
+
+---
 
 ## Auth And Roles
 
 ### Worker
-- sign in at `/auth`
+- Navigate to `/auth` and sign in
 - phone + password session
 - httpOnly cookie is the primary frontend auth path
 - sees onboarding, dashboard, payouts, claims, and risk context
 
 ### Admin
-- sign in at `/auth`
+- Navigate to `/auth` and sign in
 - separate admin session
 - sees admin oversight, intelligence page, demo runner, and review queue
 
@@ -203,10 +207,12 @@ This starts:
 - protected APIs accept either the session cookie or `Authorization: Bearer <token>`
 - the frontend stores only role metadata locally for session boot UX
 
+---
+
 ## Worker Workflow
 
 ### New worker
-1. Open `/onboarding`
+1. Navigate to `/onboarding`
 2. Register worker profile with city, zone, platform, and consent
 3. Receive risk score and recommended plan
 4. Load the detailed plan catalog from `/api/policies/plans/{worker_id}`
@@ -214,9 +220,8 @@ This starts:
 6. Open the worker dashboard explicitly after sign-in
 
 ### Returning worker
-1. Open `/auth`
-2. Sign in
-3. Review:
+1. Navigate to `/auth` and sign in
+2. Review:
    - active policy
    - claim decision cluster
    - payouts
@@ -225,10 +230,12 @@ This starts:
    - fraud review context when a claim is delayed
    - nearby incidents
 
+---
+
 ## Admin Workflow
 
 1. Sign in as admin
-2. Open `/admin`
+2. Navigate to `/admin`
 3. Review:
    - KPI strip
    - health status derived from real scheduler state
@@ -247,10 +254,12 @@ Admin utility routes also exist for:
 - force activation in simulation
 - expiring stale policies
 
+---
+
 ## Demo Runner Workflow
 
 1. Sign in as admin
-2. Open `/demo`
+2. Navigate to `/demo`
 3. Select city
 4. Click `Create demo worker` if needed
 5. Run a scenario
@@ -261,13 +270,15 @@ Admin utility routes also exist for:
    - signal snapshots
 7. Reset simulators when done
 
-Notes:
+**Notes:**
 - demo worker creation sends the full worker registration payload, including password
-- demo failures should surface inline in the page instead of failing silently
+- demo failures surface inline in the page instead of failing silently
+
+---
 
 ## Intelligence Overview Workflow
 
-Use `/intelligence` as the explanation surface.
+Navigate to `/intelligence` as the explanation surface.
 
 It is for:
 - scheduler posture
@@ -279,6 +290,8 @@ It is for:
 - risk and fraud model status and metrics
 
 It is not the same thing as the admin decision queue.
+
+---
 
 ## Geography Rule
 
@@ -294,6 +307,8 @@ Selectors should be driven from:
 
 The frontend should not treat hardcoded city constants as the source of truth.
 
+---
+
 ## Runtime Logs
 
 Use local runtime diagnostics to inspect:
@@ -304,9 +319,11 @@ Use local runtime diagnostics to inspect:
 - claim counts
 - payout totals
 
-## Useful Docs
+---
 
-- `docs/api_reference.md`
-- `docs/architecture.md`
-- `docs/intelligence.md`
-- `docs/phases.md`
+## Useful Documentation
+
+- [API Reference](api_reference.md)
+- [Architecture](architecture.md)
+- [Intelligence Layer](intelligence.md)
+- [Future Roadmap](future_roadmap.md)

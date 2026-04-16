@@ -1,0 +1,34 @@
+#!/bin/sh
+# Pre-commit hook for i18n checks
+# 
+# Setup (once per machine):
+#   cd frontend
+#   npm install --save-dev simple-git-hooks
+#   npx simple-git-hooks add pre-commit "npm run precommit"
+#
+# Or manual setup:
+#   cp scripts/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+
+echo "Running pre-commit checks..."
+
+cd frontend || exit 1
+
+# Run i18n check
+echo "🔍 Checking i18n..."
+node scripts/check-i18n.js
+if [ $? -ne 0 ]; then
+    echo "❌ i18n check failed. Please fix hardcoded strings before committing."
+    exit 1
+fi
+
+# Run lint
+echo "🔍 Running lint..."
+npm run lint --silent
+if [ $? -ne 0 ]; then
+    echo "❌ Lint check failed. Please fix lint errors before committing."
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0

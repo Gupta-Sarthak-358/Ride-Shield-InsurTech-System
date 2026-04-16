@@ -9,7 +9,11 @@
 
 > **"Claims are automatically initiated by the system. Delivery partners never file claims."**
 
-A recharge-style, AI-powered parametric insurance system that protects gig delivery workers' income in real-time — triggered by rain, extreme heat, pollution, platform outages, and curfews — using multi-signal fraud detection, duplicate claim prevention, and zero-touch payouts.
+A zero-touch, AI-driven parametric insurance system that automatically protects gig workers' income in real time — without claims, paperwork, or delays.
+
+RideShield detects disruptions (rain, heat, AQI, platform outages, curfews), verifies them using multi-signal intelligence, prevents fraud through behavioral and cluster analysis, and pays workers instantly.
+
+> ⚠️ Coverage activation follows a strict 24-hour delay to prevent adverse selection. All predictive and pricing features are designed around this constraint.
 
 ---
 
@@ -62,36 +66,33 @@ RideShield is also available as a mobile-ready experience via an Android APK wra
 
 RideShield goes beyond the required DEVTrails scope by solving real-world insurance challenges that most prototypes ignore:
 
-### 🧠 Trust Score System
-Instead of binary fraud rejection, we model long-term worker reliability. High-trust workers get the benefit of the doubt on borderline claims, improving fairness and retention.
+### 🧠 Intelligence & Fairness
+- **Trust Score System:** Models long-term worker reliability. High-trust workers get the benefit of the doubt on borderline claims, improving fairness and retention.
+- **Bounded Explainability:** Edge-case claims are not rejected blindly. Ambiguous claims route to a 24-hour admin review queue with full signal transparency.
 
-### 🛡️ Cluster Fraud Detection
-Detects coordinated fraud rings (e.g. multiple users claiming from the same geofence at the same time). Prevents mass exploitation while still allowing legitimate users through.
+### 🛡️ Fraud & System Integrity
+- **Cluster Fraud Detection:** Detects coordinated fraud rings (e.g. multiple users claiming from the same geofence at the same time). Prevents mass exploitation while still allowing legitimate users through.
+- **Event-Centric Deduplication:** One disruption = one claim. Multi-hour or repeated triggers extend a single claim instead of generating multiple payouts, preventing financial leakage.
 
-### 💸 Event-Centric Deduplication
-One disruption = one claim. Multi-hour or repeated triggers extend a single claim instead of generating multiple payouts, preventing financial leakage.
-
-### ⚖️ Bounded Explainability
-Edge-case claims are not rejected blindly. Claims in ambiguous ranges are routed to a 24-hour admin review queue with full signal transparency.
-
-### 📊 Proven Business Viability
-Modeled a realistic **~72% loss ratio** with ~28% margin, ensuring sustainability beyond a prototype.
-
-### 🏛️ Regulatory Awareness
-Designed to align with **IRDAI Regulatory Sandbox** and **DPDPA 2023**, including consent, audit logs, and data minimization.
-
-### ⚡ Frontend Intelligence Layer
-Handles retries, caching, and failure states gracefully — ensuring reliability even in poor network conditions typical for gig workers.
+### 💼 Business & Real-World Readiness
+- **Proven Loss Ratio:** Modeled **~72% loss ratio** with ~28% margin, ensuring sustainability beyond a prototype.
+- **Regulatory Alignment:** Designed for **IRDAI Regulatory Sandbox** and **DPDPA 2023**, including consent, audit logs, and data minimization.
 
 ---
 
 ## 📚 Documentation
 
+**Core System**
 - Architecture → [docs/architecture.md](docs/architecture.md)
-- API → [docs/api_reference.md](docs/api_reference.md)
 - System Flow → [docs/system_flow.md](docs/system_flow.md)
+- API → [docs/api_reference.md](docs/api_reference.md)
+
+**Product & UX**
 - Intelligence Layer → [docs/intelligence.md](docs/intelligence.md)
 - Demo Guide → [docs/demo.md](docs/demo.md)
+
+**Strategy & Expansion**
+- Future Roadmap → [docs/future_roadmap.md](docs/future_roadmap.md)
 
 ---
 
@@ -994,6 +995,8 @@ We chose a **web platform** over mobile for the following reasons:
 ## 🚀 Innovation & Extras
 
 ### 1. Zero-Touch Claims (Core Innovation)
+
+> ⚠️ Coverage activation follows a strict 24-hour delay to prevent adverse selection. All predictive features are designed around this constraint.
 No gig worker should have to file a claim after a bad day. Our system acts on their behalf. The worker's only job is to buy a weekly plan — everything else is automated. This is the defining design decision of RideShield.
 
 ### 2. Social Disruption Detection Without APIs
@@ -1051,19 +1054,8 @@ Building an automated financial system without human intervention in the loop su
 **Regulation and privacy are product constraints, not afterthoughts.** Any credible parametric insurance concept in India needs IRDAI sandbox positioning and DPDPA compliance. We built these in from the start rather than bolting them on as appendices.
 
 ---
-<<<<<<< HEAD
-# 🏗️ RideShield — Architecture Plan & Implementation Roadmap
-
-> [!TIP]
-> **View Repo Content:** &nbsp; 📜 **[Project Overview](README.md)** &nbsp; | &nbsp; 🏗️ **[Architecture & Roadmap](docs/architecture.md)**
-
----
-=======
->>>>>>> 6a2eb6a77d6162e55ae21d81f1b903de49598d8b
 
 ## 🔮 What's Next
-
-Phase 1 is architecture and documentation. The next two phases build and polish the product against the official timeline.
 
 **Phase 2 priorities (by April 4):**
 - Build the complete onboard → insure → detect → validate → pay loop
@@ -1077,11 +1069,12 @@ Phase 1 is architecture and documentation. The next two phases build and polish 
 - Deliver the 5-minute demo video and package the demo around a clear story
 
 **Beyond the hackathon:**
-- **Mobile-first interface or WhatsApp onboarding** — Rahul shouldn't need a browser
-- **Real platform API integration** — replace simulated data with actual Zomato/Swiggy/Blinkit signals
-- **Multi-city expansion** — locally calibrated risk profiles (Delhi monsoon ≠ Bengaluru rain ≠ Mumbai flood)
-- **Advanced predictive models** — week-ahead risk forecasting for better plan selection
-- **Insurer partnerships** — RideShield as white-label infrastructure for insurance providers serving the gig economy
+- **Conversational Interface (WhatsApp/SMS):** Workers can purchase plans, receive alerts, and track payouts without needing a dedicated app, reducing friction for daily usage.
+- **Telecom-Backed Identity Layer:** SIM and device binding to enforce one-worker-one-account integrity, significantly reducing account sharing, spoofing, and coordinated fraud.
+- **Platform Wallet Integration:** Premiums auto-deducted from platform earnings (e.g. Zomato/Swiggy), with payouts credited directly — eliminating manual payment steps.
+- **Federated Telemetry Integration:** Direct access to platform-level signals (orders, activity, earnings) for stronger fraud detection and more accurate income verification.
+- **Predictive Protection Engine:** Forecast-driven alerts enable workers to activate coverage in advance while respecting the 24-hour activation rule, ensuring fairness and preventing adverse selection.
+- **Multi-City Expansion:** Risk calibration across cities (Delhi ≠ Mumbai ≠ Bengaluru) with localized pricing and disruption models.
 
 > The long-term goal is simple: no gig worker should experience income loss without immediate, automated financial protection.
 

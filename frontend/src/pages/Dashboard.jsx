@@ -50,10 +50,10 @@ function FirstTimeGate({ workerId, onPurchased }) {
     setPurchasing(planName);
     try {
       await policiesApi.create({ worker_id: workerId, plan_name: planName });
-      toast.success("Policy purchased! It will activate after the waiting period.");
+      toast.success(t("dashboard.purchase.success"));
       onPurchased();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Purchase failed.");
+      toast.error(err.response?.data?.detail || t("dashboard.purchase.failed"));
     } finally {
       setPurchasing(null);
     }
@@ -133,10 +133,10 @@ function ExpiredGate({ workerId, lastPolicy, onPurchased }) {
     setPurchasing(true);
     try {
       await policiesApi.create({ worker_id: workerId, plan_name: lastPolicy.plan_name });
-      toast.success(t("dashboard.expiredGate.renew_success", "Coverage renewed! It will activate after the waiting period."));
+      toast.success(t("dashboard.expiredGate.renew_success"));
       onPurchased();
     } catch (err) {
-      toast.error(err.response?.data?.detail || t("dashboard.expiredGate.renew_failed", "Renewal failed."));
+      toast.error(err.response?.data?.detail || t("dashboard.expiredGate.renew_failed"));
     } finally {
       setPurchasing(false);
     }
@@ -262,11 +262,11 @@ export default function Dashboard() {
         return claimsList[0] || null;
       });
     } catch (err) {
-      setError(err?.response?.data?.detail || "Failed to load dashboard data.");
+      setError(err?.response?.data?.detail || t("dashboard.states.load_failed"));
     } finally {
       setLoading(false);
     }
-  }, [effectiveWorkerId]);
+  }, [effectiveWorkerId, t]);
 
   useEffect(() => {
     document.title = "Worker Dashboard | RideShield";

@@ -31,6 +31,10 @@
       "renew_success": "Coverage renewed! It will activate after the waiting period.",
       "renew_failed": "Renewal failed."
     },
+    "purchase": {
+      "success": "Policy purchased! It will activate after the waiting period.",
+      "failed": "Purchase failed."
+    },
     "narrative": {
       "latest_payout": "Latest payout {{amount}} credited automatically after system validation.",
       "approved_claims": "{{count}} approved claims so far with zero worker filing steps.",
@@ -47,7 +51,8 @@
       "loading": "Loading dashboard...",
       "worker_not_found": "Worker not found",
       "back_to_sign_in": "Back to sign in",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "load_failed": "Failed to load dashboard data."
     },
     "hero": {
       "zero_touch": "Zero-touch claims",
@@ -143,6 +148,7 @@
       "title": "Recent transfers",
       "total": "Total amount",
       "empty": "No payouts yet.",
+      "awaiting": "awaiting transfer reference",
       "backup_needed": "Backup action needed",
       "in_progress": "Transfer in progress",
       "queued": "Queued for payout",
@@ -170,7 +176,37 @@
     "coverage": "We covered",
     "coverage_ratio": "Coverage ratio",
     "select": "Select an incident",
-    "pick": "Pick a claim incident from the list to view detailed information."
+    "pick": "Pick a claim incident from the list to view detailed information.",
+    "none": "None",
+    "claim_detail": "Claim detail",
+    "decision_explanation": "Decision explanation",
+    "no_explanation": "No explanation available.",
+    "next_step": "Next step:",
+    "payout_impact": "Payout impact",
+    "hours_affected": "Hours affected:",
+    "peak_multiplier": "Peak multiplier:",
+    "gross_hourly": "Gross hourly reference:",
+    "net_protected": "Net protected hourly:",
+    "operating_cost": "Operating-cost factor:",
+    "income_protection": "Income Protection Summary",
+    "decision_strength": "Decision strength",
+    "payment_safety": "Payment safety check",
+    "incident_evidence": "Incident evidence",
+    "account_trust": "Account trust",
+    "claim_checks": "Claim checks",
+    "standard_checks": "Standard automated checks",
+    "case_type": "Case type:",
+    "no_elevated": "No elevated review checks on this claim.",
+    "worker_explanation": "Worker explanation",
+    "claim_pattern": "Claim pattern:",
+    "incident_triggers": "Incident triggers",
+    "covered_by_policy": "Covered by policy",
+    "ai_decision_factors": "AI Decision Factors",
+    "disruption_strength": "Disruption strength",
+    "payment_safety_factor": "Payment safety",
+    "flag_penalty": "Flag penalty",
+    "model_confidence": "Model confidence:",
+    "fallback_mode": "fallback mode"
   },
   "policy": {
     "active": "Active policy",
@@ -280,7 +316,8 @@
       "confirm_password_required": "Confirm the password to continue.",
       "passwords_mismatch": "Passwords do not match.",
       "zone_required": "Select an operating zone.",
-      "consent_required": "Consent is required before registration."
+      "consent_required": "Consent is required before registration.",
+      "session_expired": "Your session has expired. Please sign in again."
     },
     "password": {
       "strong": "Strong password",

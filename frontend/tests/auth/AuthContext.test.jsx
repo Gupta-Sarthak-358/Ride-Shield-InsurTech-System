@@ -44,17 +44,17 @@ describe("AuthContext session metadata helpers", () => {
     expect(localStorage.getItem("rideshield.workerId")).toBeNull();
   });
 
-  it("stores the session token in sessionStorage and applies the auth header on localhost", () => {
+  it("stores the session token in localStorage and applies the auth header", () => {
     writeStoredSessionToken("dev-token");
 
     expect(readStoredSessionToken()).toBe("dev-token");
-    expect(sessionStorage.getItem("rideshield.session_token")).toBe("dev-token");
+    expect(localStorage.getItem("rideshield.session_token")).toBe("dev-token");
     expect(client.defaults.headers.common.Authorization).toBe("Bearer dev-token");
 
     clearStoredSessionToken();
 
     expect(readStoredSessionToken()).toBeNull();
-    expect(sessionStorage.getItem("rideshield.session_token")).toBeNull();
+    expect(localStorage.getItem("rideshield.session_token")).toBeNull();
     expect(client.defaults.headers.common.Authorization).toBeUndefined();
   });
 });

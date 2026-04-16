@@ -5,7 +5,17 @@ export default function PayoutHistory({ data }) {
   const { t } = useTranslation();
 
   if (!data) {
-    return null;
+    return (
+      <div className="panel p-6">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow">{t("dashboard.payoutLedger.eyebrow")}</p>
+            <h3 className="mt-2 text-2xl font-bold text-primary">{t("dashboard.payoutLedger.title")}</h3>
+          </div>
+        </div>
+        <p className="text-sm text-on-surface-variant">{t("dashboard.payoutLedger.empty")}</p>
+      </div>
+    );
   }
 
   return (
@@ -31,7 +41,7 @@ export default function PayoutHistory({ data }) {
               </div>
               <p className="mt-1 text-sm text-on-surface-variant">
                 {payout.channel}
-                {payout.transaction_id ? ` | ${payout.transaction_id}` : " | awaiting transfer reference"}
+                {payout.transaction_id ? ` | ${payout.transaction_id}` : ` | ${t("dashboard.payoutLedger.awaiting")}`}
               </p>
             </div>
             <div className="text-right">

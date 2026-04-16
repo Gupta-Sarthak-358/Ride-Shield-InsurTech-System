@@ -1,9 +1,13 @@
 """Integration tests for trigger-driven claim generation."""
 
 import pytest
+from decimal import Decimal
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select, update
+from uuid import UUID
 
 from backend.core.demo_scenarios import enrich_worker_for_demo
+from backend.db.models import TrustScore
 from backend.main import app
 
 
@@ -129,6 +133,16 @@ async def test_review_queue_and_manual_resolution_flow(client, valid_worker_data
     assert create_policy_response.status_code == 201
 
     await enrich_worker_for_demo(worker_id, "east_delhi", "edge")
+    
+    from backend.database import async_session_factory
+    async with async_session_factory() as session:
+        worker_uuid = UUID(worker_id)
+        result = await session.execute(
+            update(TrustScore)
+            .where(TrustScore.worker_id == worker_uuid)
+            .values(score=Decimal("0.050"))
+        )
+        await session.commit()
 
     force_activate = await client.post(
         f"/api/policies/admin/force-activate?worker_id={worker_id}",

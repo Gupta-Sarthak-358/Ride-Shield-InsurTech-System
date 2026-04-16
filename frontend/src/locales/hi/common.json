@@ -31,6 +31,10 @@
       "renew_success": "कवरेज नवीनीकृत! यह प्रतीक्षा अवधि के बाद सक्रिय हो जाएगा।",
       "renew_failed": "नवीनीकरण विफल।"
     },
+    "purchase": {
+      "success": "पॉलिसी खरीदी गई! यह प्रतीक्षा अवधि के बाद सक्रिय हो जाएगी।",
+      "failed": "खरीद विफल रही।"
+    },
     "narrative": {
       "latest_payout": "सिस्टम वैलिडेशन के बाद नवीनतम भुगतान {{amount}} स्वचालित रूप से जमा किया गया।",
       "approved_claims": "अब तक {{count}} स्वीकृत दावे बिना किसी कागजी कार्रवाई के।",
@@ -47,7 +51,8 @@
       "loading": "डैशबोर्ड लोड हो रहा है...",
       "worker_not_found": "कर्मचारी नहीं मिला",
       "back_to_sign_in": "साइन इन पर वापस जाएँ",
-      "refresh": "रीफ्रेश करें"
+      "refresh": "रीफ्रेश करें",
+      "load_failed": "डैशबोर्ड डेटा लोड करने में विफल।"
     },
     "hero": {
       "zero_touch": "जीरो-टच दावे",
@@ -139,14 +144,15 @@
       "linked_claims": "संयुक्त दावे"
     },
     "payoutLedger": {
-      "eyebrow": "भुगतान खाता (Payout ledger)",
-      "title": "हाल के स्थानांतरण",
+      "eyebrow": "भुगतान लेजर",
+      "title": "हाल के ट्रांसफर",
       "total": "कुल राशि",
       "empty": "अभी तक कोई भुगतान नहीं।",
-      "backup_needed": "बैकअप कार्रवाई की आवश्यकता है",
-      "in_progress": "हस्तांतरण प्रगति पर है",
+      "awaiting": "ट्रांसफर संदर्भ की प्रतीक्षा",
+      "backup_needed": "बैकअप कार्रवाई आवश्यक",
+      "in_progress": "ट्रांसफर प्रगति पर",
       "queued": "भुगतान के लिए कतारबद्ध",
-      "completed": "हस्तांतरण पूर्ण"
+      "completed": "ट्रांसफर पूर्ण"
     },
     "trustScore": {
       "risk": "जोखिम: क्षेत्र और आय संदर्भ",
@@ -163,14 +169,44 @@
   },
   "claim": {
     "approved": "दावा स्वीकृत",
-    "rejected": "दावा स्वीकृत नहीं हो सका",
-    "under_review": "दावा समीक्षा में",
+    "rejected": "दावा स्वीकृत नहीं किया जा सका",
+    "under_review": "दावा समीक्षाधीन",
     "payout_label": "भुगतान राशि",
     "income_loss": "अनुमानित आय हानि",
     "coverage": "हमने कवर किया",
     "coverage_ratio": "कवरेज अनुपात",
     "select": "एक घटना चुनें",
-    "pick": "विस्तृत जानकारी देखने के लिए सूची से दावा चुनें।"
+    "pick": "विस्तृत जानकारी देखने के लिए सूची से एक दावा चुनें।",
+    "none": "कोई नहीं",
+    "claim_detail": "दावा विवरण",
+    "decision_explanation": "निर्णय स्पष्टीकरण",
+    "no_explanation": "कोई स्पष्टीकरण उपलब्ध नहीं।",
+    "next_step": "अगला कदम:",
+    "payout_impact": "भुगतान प्रभाव",
+    "hours_affected": "प्रभावित घंटे:",
+    "peak_multiplier": "शिखर गुणक:",
+    "gross_hourly": "सकल प्रति घंटा संदर्भ:",
+    "net_protected": "शुद्ध संरक्षित प्रति घंटा:",
+    "operating_cost": "संचालन लागत कारक:",
+    "income_protection": "आय सुरक्षा सारांश",
+    "decision_strength": "निर्णय ताकत",
+    "payment_safety": "भुगतान सुरक्षा जांच",
+    "incident_evidence": "घटना साक्ष्य",
+    "account_trust": "खाता विश्वास",
+    "claim_checks": "दावा जांच",
+    "standard_checks": "मानक स्वचालित जांच",
+    "case_type": "केस प्रकार:",
+    "no_elevated": "इस दावे पर कोई उन्नत समीक्षा जांच नहीं।",
+    "worker_explanation": "कार्यकर्ता स्पष्टीकरण",
+    "claim_pattern": "दावा पैटर्न:",
+    "incident_triggers": "घटना ट्रिगर्स",
+    "covered_by_policy": "पॉलिसी द्वारा कवर",
+    "ai_decision_factors": "एआई निर्णय कारक",
+    "disruption_strength": "व्यवधान ताकत",
+    "payment_safety_factor": "भुगतान सुरक्षा",
+    "flag_penalty": "फ्लैग पेनल्टी",
+    "model_confidence": "मॉडल विश्वास:",
+    "fallback_mode": "फॉलबैक मोड"
   },
   "policy": {
     "active": "सक्रिय पॉलिसी",
@@ -280,7 +316,8 @@
       "confirm_password_required": "आगे बढ़ने के लिए पासवर्ड की पुष्टि करें।",
       "passwords_mismatch": "पासवर्ड मेल नहीं खाते।",
       "zone_required": "एक ऑपरेटिंग क्षेत्र चुनें।",
-      "consent_required": "पंजीकरण से पहले सहमति आवश्यक है।"
+      "consent_required": "पंजीकरण से पहले सहमति आवश्यक है।",
+      "session_expired": "आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।"
     },
     "password": {
       "strong": "मजबूत पासवर्ड",

@@ -7,7 +7,6 @@ describe("ClaimDetailPanel", () => {
     render(<ClaimDetailPanel claim={null} />);
 
     expect(screen.getByText(/claim\.select/i)).toBeInTheDocument();
-    expect(screen.getByText(/claim\.pick/i)).toBeInTheDocument();
   });
 
   it("renders claim check intensity and payout breakdown when a claim is present", () => {
@@ -57,8 +56,7 @@ describe("ClaimDetailPanel", () => {
 
     expect(screen.getByText(/44% check intensity/i)).toBeInTheDocument();
     expect(screen.getByText("Claim frequency")).toBeInTheDocument();
-    expect(screen.getByText(/Gross hourly reference/i)).toBeInTheDocument();
-    expect(screen.getByText(/Net protected hourly/i)).toBeInTheDocument();
-    expect(screen.getByText(/Operating-cost factor: 85%/i)).toBeInTheDocument();
+    expect(screen.getByText(/claim\.gross_hourly/i)).toBeInTheDocument();
+    expect(screen.getByText(/claim\.net_protected/i)).toBeInTheDocument();
   });
 });

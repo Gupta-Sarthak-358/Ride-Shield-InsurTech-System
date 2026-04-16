@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Clock3, ShieldAlert } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -113,7 +113,7 @@ export default function AdminPanel() {
   const [forecastLoading, setForecastLoading] = useState(true);
   const [signalHealth, setSignalHealth] = useState(null);
   const [resolvingId, setResolvingId] = useState(null);
-  const backgroundRefreshTimer = useState({ current: null })[0];
+  const backgroundRefreshTimer = useRef(null);
 
   useEffect(() => {
     document.title = "Admin Panel | RideShield";
@@ -126,6 +126,14 @@ export default function AdminPanel() {
 
   useEffect(() => {
     loadForecast();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (backgroundRefreshTimer.current) {
+        clearTimeout(backgroundRefreshTimer.current);
+      }
+    };
   }, []);
 
   async function loadCities() {

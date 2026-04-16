@@ -1,9 +1,11 @@
 # Frontend Intelligence Layer
 
+This layer treats the frontend as an active system component — not a passive renderer — responsible for managing uncertainty, preserving perceived performance, and maintaining UX continuity under failure conditions.
+
 RideShield implements a resilience-first frontend system. The UI does not passively await data; it actively manages failure, predicts interactions, and protects the perceived speed of the product.
 
 ## Error Strategy
-Maps standardized backend `error_code` structures directly to UX actions (redirect, alert, silent retry, toast). By moving english localization strings mostly out of the backend, the frontend owns the entire UX matrix for failures.
+Maps standardized backend `error_code` structures directly to UX actions (redirect, alert, silent retry, toast). By moving English localization strings out of the backend, the frontend owns the entire UX matrix for failures.
 
 ## Retry Intelligence
 Handles network instability with controlled, progressive retries. Axios interceptors employ tracking maps to aggressively deduplicate active in-flight requests that stack on a single route, and auto-cancels background attempts if the browser actively navigates away.

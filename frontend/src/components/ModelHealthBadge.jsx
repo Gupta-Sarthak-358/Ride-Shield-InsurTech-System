@@ -27,7 +27,17 @@ export default function ModelHealthBadge() {
   }, []);
 
   if (loading) {
-    return null;
+    return (
+      <div className="rounded-[22px] border border-surface-variant bg-surface-container p-3 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity size={14} className="text-on-surface-variant" />
+            <div className="h-8 w-24 rounded bg-surface-variant/50" />
+          </div>
+          <div className="h-5 w-16 rounded-full bg-surface-variant/50" />
+        </div>
+      </div>
+    );
   }
 
   if (error) {

@@ -1,17 +1,25 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LogOut, Menu, Sparkles, X } from "lucide-react";
+import { LogOut, Menu, Sparkles, X, Languages } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthContext";
 
 export default function Navbar({ session }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
 
   async function handleLogout() {
     await logout();
     navigate("/auth");
+  }
+
+  function handleToggleLang() {
+    if (i18n && typeof i18n.changeLanguage === "function") {
+      i18n.changeLanguage(i18n.language === "en" ? "hi" : "en");
+    }
   }
 
   const navItems = session?.session?.role === "admin"
@@ -58,6 +66,15 @@ export default function Navbar({ session }) {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
+            <button
+              type="button"
+              onClick={handleToggleLang}
+              className="flex items-center gap-2 rounded-full bg-surface-container-high px-4 py-2 text-sm font-bold text-on-surface-variant transition hover:bg-surface-container-highest"
+              title="Switch language"
+            >
+              <Languages size={16} />
+              {t("general.lang_toggle", { defaultValue: "EN / HI" })}
+            </button>
             <div className="items-center gap-2 rounded-full px-3 py-2 text-sm font-medium lg:flex" style={{ background: "rgba(0, 53, 48, 0.4)", color: "#69f8e9" }}>
               <Sparkles size={16} />
               <span>{session?.session ? `${session.session.role}: ${session.session.name || session.session.username}` : "Monitoring ready"}</span>
@@ -65,7 +82,7 @@ export default function Navbar({ session }) {
             {session ? (
               <button type="button" onClick={handleLogout} className="button-secondary !rounded-xl !px-3 !py-2 text-sm">
                 <LogOut size={16} />
-                Sign out
+                {t("appFrame.sign_out")}
               </button>
             ) : null}
           </div>
@@ -94,10 +111,21 @@ export default function Navbar({ session }) {
                 {item.label}
               </NavLink>
             ))}
+            <button
+              type="button"
+              onClick={() => {
+                handleToggleLang();
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center justify-start gap-3 rounded-[18px] bg-surface-container-high px-4 py-3 text-sm font-semibold text-on-surface-variant"
+            >
+              <Languages size={16} />
+              {t("general.lang_toggle", { defaultValue: "EN / HI" })}
+            </button>
             {session ? (
-              <button type="button" onClick={handleLogout} className="button-secondary w-full justify-start">
+              <button type="button" onClick={handleLogout} className="button-secondary w-full justify-start mt-2">
                 <LogOut size={16} />
-                Sign out
+                {t("appFrame.sign_out")}
               </button>
             ) : null}
           </div>

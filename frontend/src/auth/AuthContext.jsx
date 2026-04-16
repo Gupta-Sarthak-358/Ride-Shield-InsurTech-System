@@ -5,18 +5,31 @@ import toast from "react-hot-toast";
 import { authApi } from "../api/auth";
 import { setAuthToken } from "../api/client";
 import { getDeviceFingerprint } from "../utils/fingerprint";
+import i18n from "../i18n/config";
 
 const SESSION_KEY = "rideshield.session_meta";
 const LEGACY_WORKER_ID_KEY = "rideshield.workerId";
 const SESSION_TOKEN_KEY = "rideshield.session_token";
-
-function canUseSessionTokenFallback() {
-  return typeof window !== "undefined" && window.location.hostname === "localhost";
-}
+const SESSION_EXPIRY_KEY = "rideshield.session_expiry";
 
 export function sanitizeSessionMeta(meta) {
   const role = meta?.session?.role;
   return role ? { session: { role } } : null;
+}
+
+export function isSessionExpiredLocally() {
+  try {
+    const expiry = localStorage.getItem(SESSION_EXPIRY_KEY);
+    if (!expiry) {
+      return null;
+    }
+    const expiryTime = new Date(expiry).getTime();
+    const now = Date.now();
+    const bufferMs = 5 * 60 * 1000;
+    return now > expiryTime - bufferMs;
+  } catch {
+    return null;
+  }
 }
 
 export function readStoredSessionMeta() {
@@ -46,18 +59,15 @@ export function clearStoredSessionMeta() {
   try {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(LEGACY_WORKER_ID_KEY);
+    localStorage.removeItem(SESSION_EXPIRY_KEY);
   } catch {
     // Storage unavailable
   }
 }
 
 export function readStoredSessionToken() {
-  if (!canUseSessionTokenFallback()) {
-    return null;
-  }
-
   try {
-    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+    return localStorage.getItem(SESSION_TOKEN_KEY);
   } catch {
     return null;
   }
@@ -65,16 +75,11 @@ export function readStoredSessionToken() {
 
 export function writeStoredSessionToken(token) {
   setAuthToken(token || null);
-
-  if (!canUseSessionTokenFallback()) {
-    return;
-  }
-
   try {
     if (token) {
-      sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+      localStorage.setItem(SESSION_TOKEN_KEY, token);
     } else {
-      sessionStorage.removeItem(SESSION_TOKEN_KEY);
+      localStorage.removeItem(SESSION_TOKEN_KEY);
     }
   } catch {
     // Storage unavailable
@@ -83,13 +88,8 @@ export function writeStoredSessionToken(token) {
 
 export function clearStoredSessionToken() {
   setAuthToken(null);
-
-  if (!canUseSessionTokenFallback()) {
-    return;
-  }
-
   try {
-    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    localStorage.removeItem(SESSION_TOKEN_KEY);
   } catch {
     // Storage unavailable
   }
@@ -103,6 +103,18 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let active = true;
+    const expired = isSessionExpiredLocally();
+    if (expired === true) {
+      clearStoredSessionMeta();
+      clearStoredSessionToken();
+      setSession(null);
+      setBooting(false);
+      if (active) {
+        toast.error(i18n?.t?.("auth.errors.session_expired") || "Your session has expired. Please sign in again.");
+      }
+      return;
+    }
+
     const stored = readStoredSessionMeta();
     const storedToken = readStoredSessionToken();
     if (stored) {
@@ -121,6 +133,9 @@ export function AuthProvider({ children }) {
         const next = { session: response.data.session };
         setSession(next);
         writeStoredSessionMeta(next);
+        if (response.data.session?.exp) {
+          localStorage.setItem(SESSION_EXPIRY_KEY, response.data.session.exp);
+        }
       } catch (error) {
         if (active) {
           setSession(null);
@@ -158,6 +173,9 @@ export function AuthProvider({ children }) {
         });
         writeStoredSessionMeta(next);
         writeStoredSessionToken(response.data.token);
+        if (response.data.session?.exp) {
+          localStorage.setItem(SESSION_EXPIRY_KEY, response.data.session.exp);
+        }
         return next;
       },
       async loginAdmin(username, password) {
@@ -168,6 +186,9 @@ export function AuthProvider({ children }) {
         });
         writeStoredSessionMeta(next);
         writeStoredSessionToken(response.data.token);
+        if (response.data.session?.exp) {
+          localStorage.setItem(SESSION_EXPIRY_KEY, response.data.session.exp);
+        }
         return next;
       },
       async logout() {
@@ -181,6 +202,9 @@ export function AuthProvider({ children }) {
         flushSync(() => {
           setSession(null);
         });
+        if (i18n && typeof i18n.changeLanguage === "function") {
+          i18n.changeLanguage("en");
+        }
       },
     }),
     [booting, session],

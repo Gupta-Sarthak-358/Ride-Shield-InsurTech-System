@@ -25,7 +25,7 @@ export default function ActivePolicyCard({ policy, pendingPolicy }) {
           <p className="eyebrow">{t("dashboard.coverage.eyebrow")}</p>
           <h3 className="mt-2 text-2xl font-bold text-primary">{data.display_name || humanizeSlug(data.plan_name)}</h3>
         </div>
-        <span className={statusPill(data.status || (policy ? "active" : "pending"))}>{policy ? t("dashboard.coverage.active") : t("dashboard.coverage.pending")}</span>
+        <span className={statusPill(data.status || (policy ? "active" : "pending"))}>{policy ? t("dashboard.status.active") : t("dashboard.status.pending")}</span>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
