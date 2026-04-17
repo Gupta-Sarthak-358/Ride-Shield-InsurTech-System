@@ -113,7 +113,7 @@ export default function ReviewQueue({ claims = [], isLoading = false, resolvingI
                         <p className="text-sm font-semibold text-primary">{incident.worker_name}</p>
                       </div>
                       <p className="mt-2 text-sm text-on-surface-variant">
-                        {incident.trigger_types.map(humanizeSlug).join(", ")} - {humanizeSlug(incident.zone)}
+                        {(incident.trigger_types || []).map(humanizeSlug).join(", ")} - {humanizeSlug(incident.zone)}
                       </p>
                       <p className="mt-1 text-xs text-on-surface-variant">
                         {incident.claim_count > 1
@@ -173,7 +173,7 @@ export default function ReviewQueue({ claims = [], isLoading = false, resolvingI
                       <p className="mt-3 text-sm leading-6 text-on-surface-variant">{narrative.reason}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="pill-neutral">Primary: {narrative.primary}</span>
-                        {narrative.evidence.map((factor) => (
+                        {(narrative.evidence || []).map((factor) => (
                           <span key={factor} className="pill-subtle">
                             {factor}
                           </span>

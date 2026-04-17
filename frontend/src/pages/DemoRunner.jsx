@@ -327,25 +327,25 @@ export default function DemoRunner() {
               ) : snapshotSummary.length === 0 ? (
                 <p className="text-sm text-on-surface-variant">No snapshot data available.</p>
               ) : snapshotSummary.map((snapshot) => (
-                <div key={snapshot.zone} className="rounded-[22px] p-4 panel-quiet">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-primary">{humanizeSlug(snapshot.zone)}</p>
-                    <span
-                      className={
-                        snapshot.triggers_active.length
-                          ? "pill-neutral"
-                          : "inline-flex items-center rounded-full border border-tertiary/25 bg-tertiary-container/45 px-3 py-1 text-xs font-semibold text-tertiary-fixed"
-                      }
-                    >
-                      {snapshot.triggers_active.length} triggers
-                    </span>
+                  <div key={snapshot.zone} className="rounded-[22px] p-4 panel-quiet">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold text-primary">{humanizeSlug(snapshot.zone)}</p>
+                      <span
+                        className={
+                          Array.isArray(snapshot.triggers_active) && snapshot.triggers_active.length
+                            ? "pill-neutral"
+                            : "inline-flex items-center rounded-full border border-tertiary/25 bg-tertiary-container/45 px-3 py-1 text-xs font-semibold text-tertiary-fixed"
+                        }
+                      >
+                        {Array.isArray(snapshot.triggers_active) ? snapshot.triggers_active.length : 0} triggers
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                      {Array.isArray(snapshot.triggers_active) && snapshot.triggers_active.length
+                        ? snapshot.triggers_active.map(humanizeSlug).join(", ")
+                        : "No active threshold breaches"}
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                    {snapshot.triggers_active.length
-                      ? snapshot.triggers_active.map(humanizeSlug).join(", ")
-                      : "No active threshold breaches"}
-                  </p>
-                </div>
               ))}
             </div>
           </div>

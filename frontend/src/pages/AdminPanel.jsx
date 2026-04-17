@@ -313,7 +313,7 @@ export default function AdminPanel() {
     [filteredQueueClaims],
   );
   const topIncident = filteredQueueIncidents[0] || null;
-  const integrityPreview = (analytics?.duplicate_claim_log || [])
+  const integrityPreview = (Array.isArray(analytics?.duplicate_claim_log) ? analytics.duplicate_claim_log : [])
     .filter((entry) => selectedZone === "all" || entry.details?.zone === selectedZone)
     .slice(0, 4);
   const forecastEntries = (forecast || []).filter(
