@@ -1,6 +1,7 @@
 """Health config endpoint tests."""
 
 import pytest
+from backend.config import settings
 
 
 @pytest.mark.asyncio
@@ -13,7 +14,7 @@ async def test_health_config_exposes_signal_sources(client):
     assert payload["signal_source_status"]["weather"]["configured_source"] == "mock"
     assert payload["signal_source_status"]["weather"]["captured_at"] is None
     assert payload["provider_snapshot_persistence_enabled"] is True
-    assert payload["signal_runtime"]["snapshots"]["retention_days"] == 14
+    assert payload["signal_runtime"]["snapshots"]["retention_days"] == settings.SIGNAL_SNAPSHOT_RETENTION_DAYS
     assert payload["shadow_diff_summary"]["total_diffs"] == 0
     assert "timings_ms" in payload
     assert set(payload["timings_ms"].keys()) == {"runtime", "signals", "diagnostics"}

@@ -83,7 +83,7 @@ class RealAQIProvider:
         main = entry.get("main") if isinstance(entry.get("main"), dict) else {}
         components = entry.get("components") if isinstance(entry.get("components"), dict) else {}
         aqi_bucket = int(main.get("aqi", 0) or 0)
-        return {
+        normalized = {
             "aqi_value": self._aqi_bucket_to_value(aqi_bucket),
             "aqi_bucket": aqi_bucket,
             "category": {
@@ -97,8 +97,10 @@ class RealAQIProvider:
             "pm25": float(components.get("pm2_5", 0) or 0),
             "pm10": float(components.get("pm10", 0) or 0),
             "timestamp": utc_now_naive().isoformat(),
-            "provider_payload": payload,
         }
+        # Safety net: ensure raw provider payloads never leak into the DB
+        normalized.pop("provider_payload", None)
+        return normalized
 
     async def fetch(
         self,

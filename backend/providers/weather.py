@@ -74,13 +74,17 @@ class RealWeatherProvider:
         main = payload.get("main") if isinstance(payload.get("main"), dict) else {}
         weather_list = payload.get("weather") if isinstance(payload.get("weather"), list) else []
         weather_entry = weather_list[0] if weather_list and isinstance(weather_list[0], dict) else {}
-        return {
+        # Normalize basic fields
+        normalized = {
             "rainfall_mm_hr": float(rain.get("1h", 0) or 0),
             "temperature_c": float(main.get("temp", 0) or 0),
             "scenario": weather_entry.get("main", "real_weather"),
             "timestamp": utc_now_naive().isoformat(),
-            "provider_payload": payload,
         }
+        
+        # Safety net: ensure raw provider payloads never leak into the DB
+        normalized.pop("provider_payload", None)
+        return normalized
 
     async def fetch(
         self,

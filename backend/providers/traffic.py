@@ -98,7 +98,7 @@ class RealTrafficProvider:
         else:
             congestion_level = "free_flow"
 
-        return {
+        normalized = {
             "zone": payload.get("zone"),
             "timestamp": utc_now_naive().isoformat(),
             "congestion_index": congestion_index,
@@ -113,8 +113,10 @@ class RealTrafficProvider:
             "travel_time_ratio": round(travel_time_ratio, 3),
             "confidence": round(confidence, 3),
             "road_closure": road_closure,
-            "provider_payload": payload,
         }
+        # Safety net: ensure raw provider payloads never leak into the DB
+        normalized.pop("provider_payload", None)
+        return normalized
 
     async def fetch(
         self,
