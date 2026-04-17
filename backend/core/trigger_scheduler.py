@@ -3,13 +3,17 @@
 import asyncio
 import math
 import logging
+import time
 from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import select
 
 from backend.config import settings
 from backend.core.claim_processor import claim_processor
 from backend.core.location_service import location_service
 from backend.core.trigger_engine import trigger_engine
 from backend.database import async_session_factory
+from backend.db.models import SystemStatus
 
 logger = logging.getLogger("rideshield.scheduler")
 
@@ -74,6 +78,9 @@ class TriggerScheduler:
 
     async def run_once(self):
         async with self._lock:
+            start_time = time.time()
+            status = "success"
+            error = None
             self.state["running"] = True
             self.state["last_started_at"] = utc_now_iso()
             self.state["last_error"] = None
@@ -146,18 +153,41 @@ class TriggerScheduler:
                         total_claims_approved,
                         total_claims_delayed,
                         total_claims_rejected,
-                        stale_events_closed,
                         total_payout,
                     )
                     return results
             except Exception as exc:
-                self.state["last_error"] = str(exc)
+                status = "failure"
+                error = str(exc)
+                self.state["last_error"] = error
                 logger.exception("Trigger scheduler run failed")
                 raise
             finally:
+                duration_ms = int((time.time() - start_time) * 1000)
                 self.state["last_finished_at"] = utc_now_iso()
                 self.state["running"] = False
                 self.state["next_scheduled_at"] = None
+
+                # Persist state to DB for cross-service visibility
+                db_state = {
+                    **self.state,
+                    "last_run_at": self.state["last_finished_at"],
+                    "last_error": error,
+                    "status": status,
+                    "duration_ms": duration_ms,
+                    "error": error,
+                    "interval_seconds": self.state.get("interval_seconds"),
+                }
+                async with async_session_factory() as db:
+                    try:
+                        status_record = (await db.execute(select(SystemStatus).where(SystemStatus.key == "scheduler_state"))).scalar_one_or_none()
+                        if status_record:
+                            status_record.value = db_state
+                        else:
+                            db.add(SystemStatus(key="scheduler_state", value=db_state))
+                        await db.commit()
+                    except Exception as persist_exc:
+                        logger.warning("Failed to persist scheduler state: %s", persist_exc)
 
     async def _loop(self):
         try:

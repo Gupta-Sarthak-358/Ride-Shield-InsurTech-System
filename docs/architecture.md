@@ -60,6 +60,30 @@ RideShield is a **3-tier monorepo application** with clear separation between da
 | **Fail safe** | Missing data → delay claim, never auto-reject without evidence. |
 | **Stateless API** | Backend is stateless. All state lives in PostgreSQL. |
 
+### Deployment Note: Railway Schema Bootstrap
+
+The scheduler heartbeat now depends on a lightweight `system_status` table in PostgreSQL.
+If a Railway database is behind the current ORM shape or has Alembic lineage drift, run:
+
+```bash
+python scripts/ensure_system_status_table.py
+```
+
+This script is idempotent and only bootstraps `system_status` plus the default `scheduler_state` row.
+
+### Deployment Note: Vercel Proxy
+
+For production, the frontend only talks to `/api/proxy`.
+The Vercel serverless proxy then forwards requests to Railway using `BACKEND_URL`.
+
+Required Vercel environment variable:
+
+```bash
+BACKEND_URL=https://ride-shield-backend-production.up.railway.app
+```
+
+`VITE_API_URL` should not be set in Vercel for this architecture.
+
 ---
 
 ## ⚡ Core Components

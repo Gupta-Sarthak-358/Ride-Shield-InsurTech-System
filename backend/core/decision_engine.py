@@ -33,7 +33,7 @@ class DecisionEngine:
         "ambiguity_resolver",
         "review_fallback",
     )
-    WEIGHTS = {"disruption": 0.35, "confidence": 0.25, "fraud_inverse": 0.30, "trust": 0.10}
+    WEIGHTS = {"disruption": 0.30, "confidence": 0.25, "fraud_inverse": 0.35, "trust": 0.10}
     THRESHOLDS = {
         "approved": settings.DECISION_APPROVED_THRESHOLD,
         "borderline_approved": settings.DECISION_BORDERLINE_APPROVED_THRESHOLD,
@@ -919,20 +919,27 @@ class DecisionEngine:
             uncertainty_case=uncertainty_case,
             cluster_context=cluster_context,
         )
+        strict_review_required = (
+            "timing" in fraud_flags
+            or uncertainty_case == "silent_conflict"
+            or cluster_context["routing"] in {"review", "strong_review"}
+        )
         auto_approve = (
-            adjusted_fraud <= 0.18
-            and trust_score >= 0.09
-            and event_confidence >= 0.75
-            and disruption_score >= 0.65
-            and cluster_context["routing"] != "strong_review"
+            adjusted_fraud <= 0.22
+            and trust_score >= 0.08
+            and event_confidence >= self.HIGH_CONFIDENCE_THRESHOLD
+            and disruption_score >= 0.60
+            and not strict_review_required
             and uncertainty_case != "too_perfect_state"
         )
         trusted_low_risk_approve = (
-            adjusted_fraud <= 0.18
-            and trust_score >= 0.20
-            and event_confidence >= 0.70
-            and final_score >= 0.55
+            adjusted_fraud <= 0.20
+            and trust_score >= 0.18
+            and event_confidence >= self.MODERATE_CONFIDENCE_THRESHOLD
+            and final_score >= self.THRESHOLDS["borderline_approved"]
+            and bool(fraud_flags)
             and set(fraud_flags).issubset(self.LOW_RISK_REVIEW_FLAGS)
+            and not strict_review_required
             and uncertainty_case != "core_contradiction"
         )
         auto_reject = (
@@ -946,7 +953,7 @@ class DecisionEngine:
                 and adjusted_fraud <= 0.45
                 and final_score >= self.THRESHOLDS["delayed"]
                 and flag_profile["strong_count"] == 0
-                and cluster_context["routing"] != "strong_review"
+                and not strict_review_required
                 and uncertainty_case != "core_contradiction"
             )
             or (
@@ -957,7 +964,7 @@ class DecisionEngine:
                 and final_score >= 0.55
                 and automation_confidence >= 0.60
                 and flag_profile["strong_count"] == 0
-                and cluster_context["routing"] != "strong_review"
+                and not strict_review_required
                 and uncertainty_case not in {"core_contradiction", "too_perfect_state"}
             )
         )
@@ -969,7 +976,7 @@ class DecisionEngine:
             and final_score >= 0.55
             and automation_confidence >= 0.55
             and payout_amount <= self.PAYOUT_CAPS["weak_signal_confident"]
-            and cluster_context["routing"] != "strong_review"
+            and not strict_review_required
             and uncertainty_case not in {"core_contradiction", "too_perfect_state"}
         )
         false_review_safe_lane_approve = (
@@ -980,7 +987,7 @@ class DecisionEngine:
             and trust_score >= 0.30
             and event_confidence >= 0.62
             and automation_confidence >= 0.57
-            and cluster_context["routing"] != "strong_review"
+            and not strict_review_required
             and uncertainty_case not in {"core_contradiction", "too_perfect_state", "silent_conflict"}
         )
         device_micro_payout_approve = (
@@ -1009,12 +1016,12 @@ class DecisionEngine:
             and flag_profile["strong_count"] == 0
             and flag_profile["moderate_count"] == 0
             and payout_amount <= self.PAYOUT_CAPS["borderline_confident"]
-            and cluster_context["routing"] != "strong_review"
+            and not strict_review_required
             and uncertainty_case not in {"core_contradiction", "silent_conflict"}
         )
         threshold_score_approve = final_score >= self.THRESHOLDS["approved"] and (
-            final_score >= 0.78 or automation_confidence >= 0.56
-        ) and uncertainty_case not in {"core_contradiction", "too_perfect_state", "silent_conflict"} and cluster_context["routing"] != "strong_review"
+            final_score >= 0.75 or automation_confidence >= 0.50
+        ) and not strict_review_required and uncertainty_case not in {"core_contradiction", "too_perfect_state", "silent_conflict"}
 
         policy_context = self._build_policy_context(
             final_score=final_score,

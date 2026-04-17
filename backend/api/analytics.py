@@ -17,7 +17,7 @@ from backend.core.risk_model_service import risk_model_service
 from backend.core.session_auth import require_admin_session
 from backend.core.trigger_scheduler import trigger_scheduler
 from backend.database import async_session_factory, get_db
-from backend.db.models import AuditLog, Claim, DecisionLog, Event, Payout, Policy, Worker, WorkerActivity
+from backend.db.models import AuditLog, Claim, DecisionLog, Event, Payout, Policy, SystemStatus, Worker, WorkerActivity
 from backend.utils.time import utc_now_naive
 
 router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
@@ -25,6 +25,35 @@ _ADMIN_FORECAST_CACHE: dict[str, Any] = {
     "expires_at": None,
     "payload": None,
 }
+
+
+def _scheduler_state_default() -> dict[str, Any]:
+    return {
+        **trigger_scheduler.state,
+        "status": "unknown",
+        "duration_ms": None,
+        "error": trigger_scheduler.state.get("last_error"),
+    }
+
+
+async def _load_scheduler_state(db: AsyncSession) -> dict[str, Any]:
+    fallback = _scheduler_state_default()
+    try:
+        persisted = (
+            await db.execute(select(SystemStatus.value).where(SystemStatus.key == "scheduler_state"))
+        ).scalar_one_or_none()
+    except Exception:
+        return fallback
+
+    if not isinstance(persisted, dict):
+        return fallback
+
+    merged = {**fallback, **persisted}
+    if merged.get("last_run_at") and not merged.get("last_finished_at"):
+        merged["last_finished_at"] = merged["last_run_at"]
+    if merged.get("error") and not merged.get("last_error"):
+        merged["last_error"] = merged["error"]
+    return merged
 
 
 async def _forecast_city_snapshot(city: str, horizon_hours: int) -> dict:
@@ -799,7 +828,7 @@ async def get_admin_overview(
         "loss_ratio": round((payouts_total / max(1.0, premiums_in_force)) * 100, 1),
         "worker_activity_index": worker_activity_index,
         "duplicate_claim_log": duplicate_claim_log,
-        "scheduler": trigger_scheduler.state,
+        "scheduler": await _load_scheduler_state(db),
         "decision_health": {
             "claim_total": claim_total,
             "auto_approved": auto_approved_count,

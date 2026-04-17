@@ -486,3 +486,15 @@ class Notification(Base):
 
     def __repr__(self):
         return f"<Notification {self.category} for {self.worker_id}>"
+
+
+class SystemStatus(Base):
+    """General purpose key-value store for operational metadata and heartbeats."""
+    __tablename__ = "system_status"
+
+    key = Column(String(100), primary_key=True)
+    value = Column(JSONB, nullable=False)
+    updated_at = Column(DateTime, default=utc_now_naive, onupdate=utc_now_naive)
+
+    def __repr__(self):
+        return f"<SystemStatus {self.key}>"

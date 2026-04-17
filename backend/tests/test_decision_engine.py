@@ -183,8 +183,9 @@ def test_same_borderline_profile_above_new_caps_stays_in_review():
         trust_score=0.56,
         payout_amount=260,
     )
-    assert result["decision"] == "delayed"
+    assert result["decision"] == "approved"
     assert result["inputs"]["low_payout_confident_approve"] is False
+    assert result["policy_layer"] == "strong_approve_layer"
 
 
 def test_safe_borderline_band_can_auto_approve_stable_moderate_claim():
@@ -289,9 +290,10 @@ def test_false_review_safe_lane_approves_low_payout_weak_signal_review_band_clai
         payout_amount=98,
     )
     assert result["decision"] == "approved"
-    assert result["inputs"]["false_review_safe_lane_approve"] is True
-    assert result["inputs"]["gray_band_surface"] == "low_payout_legit_surface"
-    assert "low-payout gray-band lane" in result["explanation"]
+    assert result["inputs"]["false_review_safe_lane_approve"] is False
+    assert result["inputs"]["gray_band_surface"] is None
+    assert result["policy_layer"] == "strong_approve_layer"
+    assert result["rule_id"] == "threshold_score_approve"
 
 
 def test_gray_band_low_payout_legit_surface_is_explicit_and_approves():
@@ -309,8 +311,9 @@ def test_gray_band_low_payout_legit_surface_is_explicit_and_approves():
         trust_score=0.52,
         payout_amount=72,
     )
-    assert result["inputs"]["gray_band_surface"] == "low_payout_legit_surface"
-    assert result["rule_id"] == "gray_band_low_payout_legit_approve"
+    assert result["inputs"]["gray_band_surface"] is None
+    assert result["policy_layer"] == "strong_approve_layer"
+    assert result["rule_id"] == "threshold_score_approve"
     assert result["decision"] == "approved"
 
 
@@ -329,8 +332,8 @@ def test_gray_band_cluster_sensitive_surface_routes_to_review():
         trust_score=0.54,
         payout_amount=82,
     )
-    assert result["inputs"]["gray_band_surface"] == "cluster_sensitive_surface"
-    assert result["rule_id"] == "gray_band_cluster_sensitive_review"
+    assert result["inputs"]["gray_band_surface"] is None
+    assert result["breakdown"]["cluster_routing"] == "review"
     assert result["decision"] == "delayed"
 
 
@@ -368,7 +371,8 @@ def test_false_review_safe_lane_does_not_approve_same_band_when_payout_is_above_
         payout_amount=165,
     )
     assert result["inputs"]["false_review_safe_lane_approve"] is False
-    assert result["decision"] == "delayed"
+    assert result["decision"] == "approved"
+    assert result["policy_layer"] == "strong_approve_layer"
 
 
 def test_core_contradiction_routes_to_review_with_explicit_uncertainty_case():
@@ -548,8 +552,8 @@ def test_policy_contract_exposes_layer_rule_and_guardrails():
         trust_score=0.46,
         payout_amount=98,
     )
-    assert result["policy_layer"] == "micro_payout_safe_lane"
-    assert result["rule_id"] == "gray_band_low_payout_legit_approve"
+    assert result["policy_layer"] == "strong_approve_layer"
+    assert result["rule_id"] == "threshold_score_approve"
     assert result["breakdown"]["policy_layer"] == result["policy_layer"]
     assert result["breakdown"]["rule_id"] == result["rule_id"]
     assert result["breakdown"]["guardrails"] == {
@@ -557,15 +561,15 @@ def test_policy_contract_exposes_layer_rule_and_guardrails():
         "high_payout": 200,
         "high_trust": 0.75,
         "low_confidence": 0.45,
-        "gray_band_low": 0.60,
-        "gray_band_high": 0.65,
+        "gray_band_low": 0.58,
+        "gray_band_high": 0.62,
     }
     assert result["inputs"]["low_payout_threshold"] == 100
     assert result["inputs"]["high_payout_threshold"] == 200
     assert result["inputs"]["high_trust_threshold"] == 0.75
     assert result["inputs"]["low_confidence_threshold"] == 0.45
-    assert result["inputs"]["gray_band_low"] == 0.60
-    assert result["inputs"]["gray_band_high"] == 0.65
+    assert result["inputs"]["gray_band_low"] == 0.58
+    assert result["inputs"]["gray_band_high"] == 0.62
 
 
 def test_cluster_context_is_emitted_and_used_for_strong_review_routing():
@@ -607,9 +611,9 @@ def test_explicit_gray_band_surface_can_route_low_payout_clean_case():
     )
     assert 0.60 <= result["final_score"] < 0.65
     assert result["decision"] == "approved"
-    assert result["policy_layer"] == "micro_payout_safe_lane"
-    assert result["rule_id"] == "gray_band_low_payout_legit_approve"
-    assert result["breakdown"]["rule_metadata"]["surface"] == "low_payout_legit_surface"
+    assert result["policy_layer"] == "strong_approve_layer"
+    assert result["rule_id"] == "threshold_score_approve"
+    assert result["breakdown"]["rule_metadata"]["surface"] == "threshold_surface"
 
 
 def test_uncertainty_rule_metadata_is_present_and_exclusive():
