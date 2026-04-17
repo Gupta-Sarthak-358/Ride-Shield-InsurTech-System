@@ -4,7 +4,7 @@ import { FlaskConical, PlayCircle, Save, Trash2 } from "lucide-react";
 import { locationsApi } from "../api/locations";
 import { triggersApi } from "../api/triggers";
 import { STORAGE_KEYS } from "../utils/constants";
-import { formatCurrency, humanizeSlug } from "../utils/formatters";
+import { formatCurrency, humanizeSlug, ensureArray } from "../utils/formatters";
 
 const defaultScenario = {
   city: "delhi",
@@ -106,7 +106,7 @@ export default function ScenarioLab() {
       setCitiesLoading(true);
       try {
         const response = await locationsApi.cities();
-        const cities = response.data || [];
+        const cities = ensureArray(response.data, "lab_cities");
         setLocations((current) => ({ ...current, cities: cities.length ? cities : fallbackCities }));
       } catch {
         setLocations((current) => ({ ...current, cities: fallbackCities }));
@@ -124,13 +124,14 @@ export default function ScenarioLab() {
         return;
       }
       const response = await locationsApi.zones(scenario.city);
-      setLocations((current) => ({ ...current, zones: response.data || [] }));
+      const zones = ensureArray(response.data, `lab_zones_${scenario.city}`);
+      setLocations((current) => ({ ...current, zones }));
     }
     loadZones();
   }, [scenario.city]);
 
   const cityZones = useMemo(
-    () => locations.zones.filter((zone) => zone.city_slug === scenario.city),
+    () => ensureArray(locations.zones).filter((zone) => zone.city_slug === scenario.city),
     [locations.zones, scenario.city],
   );
 
@@ -138,7 +139,8 @@ export default function ScenarioLab() {
     if (!cityZones.length) {
       return;
     }
-    const validZones = scenario.zones.filter((zone) => cityZones.some((item) => item.slug === zone));
+    const zonesToFilter = ensureArray(scenario.zones, "scenario_zones");
+    const validZones = zonesToFilter.filter((zone) => cityZones.some((item) => item.slug === zone));
     if (!validZones.length) {
       setScenario((current) => ({
         ...current,

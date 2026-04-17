@@ -153,6 +153,7 @@ export function decisionConfidenceCopy(band, status) {
   return "Low confidence monitoring";
 }
 
+
 export function riskLabel(score) {
   const numeric = Number(score || 0);
   if (numeric < 0.25) {
@@ -166,3 +167,17 @@ export function riskLabel(score) {
   }
   return { label: "Critical",   tone: "text-error" };
 }
+
+/**
+ * Ensures data is an array. Logs a warning if it's not and returns an empty array.
+ */
+export function ensureArray(data, context = "unknown") {
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (data !== null && data !== undefined) {
+    console.warn(`[RideShield] Expected array for ${context}, got:`, data);
+  }
+  return [];
+}
+

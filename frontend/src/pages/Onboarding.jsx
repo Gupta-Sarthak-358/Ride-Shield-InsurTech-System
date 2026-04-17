@@ -17,6 +17,7 @@ import { PLATFORM_OPTIONS, STORAGE_KEYS } from "../utils/constants";
 import {
   formatCurrency,
   humanizeSlug,
+  ensureArray,
 } from "../utils/formatters";
 import { getDeviceFingerprint } from "../utils/fingerprint";
 
@@ -147,35 +148,33 @@ export default function Onboarding() {
   const [touched, setTouched] = useState({});
   const [showAllPlans, setShowAllPlans] = useState(false);
 
-  const planOptions = useMemo(
-    () =>
-      planCatalog.length
-        ? planCatalog
-        : registration?.available_plans || [],
-    [planCatalog, registration?.available_plans],
-  );
+  const planOptions = useMemo(() => {
+    const safeCatalog = Array.isArray(planCatalog) ? planCatalog : [];
+    return safeCatalog.length ? safeCatalog : (Array.isArray(registration?.available_plans) ? registration.available_plans : []);
+  }, [planCatalog, registration?.available_plans]);
+  const safePlanOptions = Array.isArray(planOptions) ? planOptions : [];
   const recommendedPlanName =
-    planOptions.find((plan) => plan.is_recommended)?.plan_name ||
+    safePlanOptions.find((plan) => plan.is_recommended)?.plan_name ||
     registration?.recommended_plan ||
     "";
   const selectedPlanData =
-    planOptions.find((plan) => plan.plan_name === selectedPlan) ||
-    registration?.available_plans?.find(
+    safePlanOptions.find((plan) => plan.plan_name === selectedPlan) ||
+    (Array.isArray(registration?.available_plans) ? registration.available_plans : []).find(
       (plan) => plan.plan_name === selectedPlan,
     );
   const featuredPlans = useMemo(
-    () => getFeaturedPlans(Array.isArray(planOptions) ? planOptions : [], selectedPlan, recommendedPlanName),
-    [planOptions, recommendedPlanName, selectedPlan],
+    () => getFeaturedPlans(safePlanOptions, selectedPlan, recommendedPlanName),
+    [safePlanOptions, recommendedPlanName, selectedPlan],
   );
   const additionalPlans = useMemo(() => {
-    const featured = Array.isArray(featuredPlans) ? featuredPlans : [];
-    return planOptions.filter(
+    const safeFeatured = Array.isArray(featuredPlans) ? featuredPlans : [];
+    return safePlanOptions.filter(
       (plan) =>
-        !featured.some(
+        !safeFeatured.some(
           (featuredPlan) => featuredPlan.plan_name === plan.plan_name,
         ),
     );
-  }, [featuredPlans, planOptions]);
+  }, [featuredPlans, safePlanOptions]);
   const stepIndex = steps.findIndex((item) => item.id === step);
   const progressWidth = `${((stepIndex + 1) / steps.length) * 100}%`;
   const validationErrors = useMemo(() => validateRegistration(form), [form]);
@@ -224,7 +223,7 @@ export default function Onboarding() {
     setLocationsError("");
     try {
       const response = await locationsApi.cities();
-      const cities = response.data || [];
+      const cities = ensureArray(response.data, "city_options");
       setCityOptions(cities);
       if (cities.length) {
         setForm((current) =>
@@ -244,7 +243,7 @@ export default function Onboarding() {
     try {
       setLocationsError("");
       const response = await locationsApi.zones(citySlug);
-      const zones = response.data || [];
+      const zones = ensureArray(response.data, `zones_${citySlug}`);
       setZoneOptions(zones);
       if (zones.length) {
         setForm((current) =>
@@ -316,7 +315,7 @@ export default function Onboarding() {
         if (!active) {
           return;
         }
-        const plans = response.data?.plans || [];
+        const plans = ensureArray(response.data?.plans, "plan_catalog");
         setPlanCatalog(plans);
 
         const recommended = response.data?.recommended;
@@ -325,7 +324,7 @@ export default function Onboarding() {
             if (!current) {
               return recommended;
             }
-            return Array.isArray(plans) && plans.some((plan) => plan.plan_name === current)
+            return plans.some((plan) => plan.plan_name === current)
               ? current
               : recommended;
           });
