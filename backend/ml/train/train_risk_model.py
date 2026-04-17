@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import numpy as np
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -80,7 +81,7 @@ def train_risk_model(output_dir: str = "backend/ml/artifacts", use_gpu: bool = T
     train_predictions = model.predict(X_train)
     
     mae = float(mean_absolute_error(y_test, predictions))
-    rmse = float(mean_squared_error(y_test, predictions, squared=False))
+    rmse = float(np.sqrt(mean_squared_error(y_test, predictions)))
     r2 = float(r2_score(y_test, predictions))
     
     train_mae = float(mean_absolute_error(y_train, train_predictions))
