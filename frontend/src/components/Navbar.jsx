@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LogOut, Menu, Shield, X, Languages } from "lucide-react";
+import { LogOut, Menu, X, Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthContext";

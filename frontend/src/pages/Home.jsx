@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Radar, ShieldCheck, Wallet,
   TrendingUp, Clock, Users, CheckCircle2,
-  Activity, ChevronRight, Shield, MapPin, Clock3, CalendarDays
+  Activity, ChevronRight, Shield, MapPin, Clock3
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
-import TiltWrapper from "../components/TiltWrapper";
 import GlobalCursorGlow from "../components/GlobalCursorGlow";
 
 /* ─── Data ─────────────────────────────────────────── */
@@ -41,29 +40,6 @@ function useScrollReveal() {
     return () => observer.disconnect();
   }, []);
   return [ref, isVisible];
-}
-
-function use3DTilt(intensity = 10) {
-  const ref = useRef(null);
-  const handleMouseMove = useCallback((e) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const rotateX = ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * -intensity;
-    const rotateY = ((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * intensity;
-    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01,1.01,1.01)`;
-  }, [intensity]);
-  const handleMouseLeave = useCallback(() => {
-    if (ref.current) ref.current.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale3d(1,1,1)";
-  }, []);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.addEventListener("mousemove", handleMouseMove);
-    el.addEventListener("mouseleave", handleMouseLeave);
-    return () => { el.removeEventListener("mousemove", handleMouseMove); el.removeEventListener("mouseleave", handleMouseLeave); };
-  }, [handleMouseMove, handleMouseLeave]);
-  return ref;
 }
 
 /* ─── Sub-components ────────────────────────────────── */
@@ -192,7 +168,6 @@ export default function Home() {
   const { t } = useTranslation("common");
   const { booting, isAuthenticated, role, session } = useAuth();
   const displayName = session?.session?.name || session?.session?.username || t("home.hero.there");
-  const heroTiltRef = use3DTilt(4);
   const stats = getStats(t);
   const workerFlow = getWorkerFlow(t);
 

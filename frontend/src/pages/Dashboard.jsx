@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownRight, ChevronDown, ChevronUp, MapPin, RefreshCcw, Shield, ShieldCheck, ShieldOff, Wallet, Sparkles } from "lucide-react";
+import { ArrowDownRight, ChevronDown, MapPin, RefreshCcw, Shield, ShieldCheck, ShieldOff, Wallet, Sparkles } from "lucide-react";
 import { SkeletonBlock, SkeletonText } from "../components/Skeleton";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";

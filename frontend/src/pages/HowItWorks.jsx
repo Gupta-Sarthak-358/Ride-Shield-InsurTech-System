@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity, ArrowRight, CalendarDays, Clock3, MapPin, Radar,
-  ShieldCheck, Wallet, Zap, ChevronRight, Sparkles, CloudRain, ThermometerSun, WifiOff, Bell
+  ShieldCheck, Wallet, Zap, Sparkles, CloudRain, ThermometerSun, WifiOff, Bell
 } from "lucide-react";
 import SectionHeader from "../components/SectionHeader";
 import TiltWrapper from "../components/TiltWrapper";
@@ -31,30 +31,8 @@ const getEngineSections = (t) => [
 ];
 
 /* ─── 3D Tilt Hook ─── */
-function use3DTilt(intensity = 8) {
-  const ref = useRef(null);
-  const handleMouseMove = useCallback((e) => {
-    const el = ref.current; if (!el) return;
-    const r = el.getBoundingClientRect();
-    const rx = ((e.clientY - (r.top + r.height / 2)) / (r.height / 2)) * -intensity;
-    const ry = ((e.clientX - (r.left + r.width / 2)) / (r.width / 2)) * intensity;
-    el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.015,1.015,1.015)`;
-  }, [intensity]);
-  const handleMouseLeave = useCallback(() => {
-    if (ref.current) ref.current.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale3d(1,1,1)";
-  }, []);
-  useEffect(() => {
-    const el = ref.current; if (!el) return;
-    el.addEventListener("mousemove", handleMouseMove);
-    el.addEventListener("mouseleave", handleMouseLeave);
-    return () => { el.removeEventListener("mousemove", handleMouseMove); el.removeEventListener("mouseleave", handleMouseLeave); };
-  }, [handleMouseMove, handleMouseLeave]);
-  return ref;
-}
-
 export default function HowItWorks() {
   const { t } = useTranslation();
-  const heroTiltRef = use3DTilt(4);
   const workerFlow  = getWorkerFlow(t);
   const policyEngine = getPolicyEngine(t);
   const engineSections = getEngineSections(t);
