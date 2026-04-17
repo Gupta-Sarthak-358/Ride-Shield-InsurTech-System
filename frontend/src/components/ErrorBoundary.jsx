@@ -24,7 +24,6 @@ export default class ErrorBoundary extends Component {
         componentStack: errorInfo?.componentStack,
       },
     });
-    console.error("RideShield UI Error:", error, errorInfo);
   }
 
   render() {

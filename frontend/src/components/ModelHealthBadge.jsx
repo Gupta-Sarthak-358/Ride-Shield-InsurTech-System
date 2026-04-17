@@ -17,7 +17,6 @@ export default function ModelHealthBadge() {
         setError(null);
       } catch (err) {
         setError(err.message || "Failed to load model health");
-        console.error("Model health load error:", err);
       } finally {
         setLoading(false);
       }

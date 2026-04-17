@@ -27,7 +27,6 @@ export default function ForecastCards({ city = "delhi" }) {
         setError(null);
       } catch (err) {
         setError(err.message || "Failed to load forecasts");
-        console.error("Forecast load error:", err);
       } finally {
         setLoading(false);
       }

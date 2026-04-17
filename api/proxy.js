@@ -12,8 +12,6 @@ export default async function handler(req, res) {
   const path = req.url.replace(/^\/api\/proxy/, "");
   const targetUrl = `${backendBaseUrl.replace(/\/$/, "")}${path}`;
 
-  console.log(`Proxying ${req.method} ${req.url} -> ${targetUrl}`);
-
   try {
     // Surgical header forwarding
     const headers = {
@@ -67,7 +65,6 @@ export default async function handler(req, res) {
 
     res.status(response.status).send(data);
   } catch (error) {
-    console.error("Proxy error:", error);
     res.status(500).json({ error: "Proxy error", details: error.message });
   }
 }

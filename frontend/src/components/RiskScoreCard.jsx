@@ -26,7 +26,6 @@ export default function RiskScoreCard({ workerId }) {
         setError(null);
       } catch (err) {
         setError(err.message || "Failed to load risk score");
-        console.error("Risk score load error:", err);
       } finally {
         setLoading(false);
       }

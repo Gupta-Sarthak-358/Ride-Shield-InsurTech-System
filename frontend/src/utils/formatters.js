@@ -176,7 +176,9 @@ export function ensureArray(data, context = "unknown") {
     return data;
   }
   if (data !== null && data !== undefined) {
-    console.warn(`[RideShield] Expected array for ${context}, got:`, data);
+    if (import.meta.env.MODE === "development") {
+      console.warn(`[RideShield] Expected array for ${context}, got:`, data);
+    }
   }
   return [];
 }
